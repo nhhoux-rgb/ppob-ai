@@ -13,16 +13,31 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ??
+  (process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : "http://localhost:3000");
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: "뽑AI · 인형뽑기 AI 공략",
   description:
     "사진 한 장이면 끝. 인형뽑기 기계 사진을 올리면 AI가 가장 뽑기 쉬운 인형과 공략법을 찾아드립니다.",
+  applicationName: "뽑AI",
   keywords: ["인형뽑기", "인형뽑기 공략", "AI 공략", "뽑기", "크레인 게임"],
   openGraph: {
-    title: "뽑AI · 인형뽑기 AI 공략",
-    description:
-      "사진 한 장으로 가장 뽑기 쉬운 인형을 AI가 찾아드립니다.",
     type: "website",
+    siteName: "뽑AI",
+    title: "뽑AI · 인형뽑기 AI 공략",
+    description: "사진 한 장으로 가장 뽑기 쉬운 인형을 AI가 찾아드립니다.",
+    url: "/",
+    locale: "ko_KR",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "뽑AI · 인형뽑기 AI 공략",
+    description: "사진 한 장으로 가장 뽑기 쉬운 인형을 AI가 찾아드립니다.",
   },
   other: {
     "google-adsense-account": "ca-pub-2652292791594458",
