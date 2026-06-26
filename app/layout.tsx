@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import Script from "next/script";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -56,11 +55,12 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         {children}
-        <Script
-          id="adsbygoogle-script"
+        {/* AdSense loader — plain script tag so it renders literally in the
+            served HTML head (React 19 hoists async scripts), which is what
+            the AdSense verification crawler looks for. */}
+        <script
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2652292791594458"
-          strategy="beforeInteractive"
           crossOrigin="anonymous"
         />
       </body>
