@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useRef, useState, type ChangeEvent } from "react";
+import SiteFooter from "./site-footer";
 
 type Target = {
   rank: number;
@@ -417,12 +417,7 @@ export default function Home() {
             사진상 배치 기준 추천이며, 실제 성공 여부는 기계 세팅에 따라 달라질
             수 있습니다.
           </p>
-          <Link
-            href="/privacy"
-            className="mt-3 inline-block font-medium text-zinc-400 underline underline-offset-2 transition hover:text-violet-600"
-          >
-            개인정보처리방침
-          </Link>
+          <SiteFooter />
         </footer>
       </main>
     </div>
