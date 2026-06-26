@@ -76,6 +76,7 @@ score는 0~100 사이 정수.
             {
               type: "input_image",
               image_url: imageBase64,
+              detail: "auto",
             },
           ],
         },
