@@ -2,6 +2,7 @@
 
 import { useRef, useState, type ChangeEvent } from "react";
 import SiteFooter from "./site-footer";
+import VisitorCount from "./visitor-count";
 
 type Target = {
   rank: number;
@@ -413,6 +414,7 @@ export default function Home() {
         )}
 
         <footer className="mt-8 pb-6 text-center text-xs leading-relaxed text-zinc-400">
+          <VisitorCount />
           <p>
             사진상 배치 기준 추천이며, 실제 성공 여부는 기계 세팅에 따라 달라질
             수 있습니다.
