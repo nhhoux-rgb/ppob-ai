@@ -4,6 +4,7 @@ import { useRef, useState, type ChangeEvent } from "react";
 import SiteFooter from "./site-footer";
 import VisitorCount from "./visitor-count";
 import ToolTabs from "./tool-tabs";
+import ShareButton from "./share-button";
 
 type Target = {
   rank: number;
@@ -414,6 +415,10 @@ export default function Home() {
               )}
             </div>
           </section>
+        )}
+
+        {result && !loading && (
+          <ShareButton text="🕹️ 인형뽑기 AI 공략! 사진 한 장으로 제일 뽑기 쉬운 인형을 찾아줘요" />
         )}
 
         <footer className="mt-8 pb-6 text-center text-xs leading-relaxed text-zinc-400">

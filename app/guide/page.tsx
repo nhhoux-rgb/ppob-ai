@@ -127,6 +127,28 @@ export default function GuidePage() {
           </div>
         </article>
 
+        <section className="mt-10 border-t border-zinc-100 pt-6">
+          <h2 className="mb-3 text-base font-bold text-zinc-900">더 읽어보기</h2>
+          <ul className="space-y-2">
+            <li>
+              <Link
+                href="/guide/price"
+                className="text-sm font-semibold text-violet-600 underline underline-offset-2"
+              >
+                인형뽑기 인형 가격은 얼마? 본전 뽑는 법
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/guide/rigged"
+                className="text-sm font-semibold text-violet-600 underline underline-offset-2"
+              >
+                인형뽑기 조작될까? 성공 확률 높이는 법
+              </Link>
+            </li>
+          </ul>
+        </section>
+
         <footer className="mt-12 border-t border-zinc-100 pt-6 pb-10 text-center text-xs text-zinc-400">
           <p>© 2026 뽑AI</p>
           <SiteFooter />

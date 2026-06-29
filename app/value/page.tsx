@@ -3,6 +3,7 @@
 import { useRef, useState, type ChangeEvent } from "react";
 import SiteFooter from "../site-footer";
 import ToolTabs from "../tool-tabs";
+import ShareButton from "../share-button";
 
 type PriceResult = {
   item: string;
@@ -313,6 +314,10 @@ export default function ValuePage() {
               </div>
             )}
           </section>
+        )}
+
+        {result && !loading && (
+          <ShareButton text="💰 이 인형 본전 뽑으려면 몇 판? 인형뽑기 본전 분석 AI" />
         )}
 
         <footer className="mt-8 pb-6 text-center text-xs leading-relaxed text-zinc-400">
