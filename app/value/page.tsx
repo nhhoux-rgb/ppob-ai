@@ -6,6 +6,8 @@ import ToolTabs from "../tool-tabs";
 
 type PriceResult = {
   item: string;
+  size?: "소형" | "중형" | "대형";
+  licensed?: boolean;
   priceMin: number;
   priceMax: number;
   priceEstimate: number;
@@ -242,6 +244,24 @@ export default function ValuePage() {
                   <p className="mt-0.5 text-sm font-bold text-zinc-900">
                     {result.item}
                   </p>
+                  <div className="mt-1.5 flex flex-wrap gap-1.5">
+                    {result.size && (
+                      <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-semibold text-zinc-600">
+                        {result.size}
+                      </span>
+                    )}
+                    {typeof result.licensed === "boolean" && (
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                          result.licensed
+                            ? "bg-violet-100 text-violet-700"
+                            : "bg-zinc-100 text-zinc-500"
+                        }`}
+                      >
+                        {result.licensed ? "정품 추정" : "무명 추정"}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <span
                   className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${CONFIDENCE_THEME[result.confidence]}`}

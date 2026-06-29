@@ -23,6 +23,8 @@ const RESULT_SCHEMA = {
   additionalProperties: false,
   properties: {
     item: { type: "string" },
+    size: { type: "string", enum: ["소형", "중형", "대형"] },
+    licensed: { type: "boolean" },
     priceMin: { type: "integer" },
     priceMax: { type: "integer" },
     priceEstimate: { type: "integer" },
@@ -32,6 +34,8 @@ const RESULT_SCHEMA = {
   },
   required: [
     "item",
+    "size",
+    "licensed",
     "priceMin",
     "priceMax",
     "priceEstimate",
@@ -43,23 +47,31 @@ const RESULT_SCHEMA = {
 
 const PROMPT = `
 너는 인형뽑기 인형·굿즈의 한국 소매가를 추정하는 전문가야.
-사진 속 인형(또는 굿즈)을 보고 한국 시장 기준 "대략적인" 소매가를 원(KRW)으로 추정해줘.
+사진 속 인형을 보고 한국 시장 기준 대략적인 소매가를 원(KRW)으로 추정해줘.
 
-먼저 "item"에 무엇인지 적어 (캐릭터/브랜드/종류/대략 크기 등).
-"reason"에는 가격을 그렇게 본 근거를 간단히 적어.
+[가장 중요] 모든 인형을 비슷한 가격으로 뭉뚱그리지 마.
+크기와 정품 여부에 따라 가격이 크게 달라져야 한다. 무난한 중간값(예: 5000원)으로 도망가지 마.
 
-가격은 범위로 제시해:
-- priceMin: 합리적인 최저 소매가(원)
-- priceMax: 합리적인 최고 소매가(원)
-- priceEstimate: 대표값(원, priceMin~priceMax 사이)
-- confidence: 유명 IP/브랜드라 특정이 쉬우면 "high", 일반적이면 "medium", 무명/불명확하면 "low"
+먼저 두 가지를 분류해:
+- size: 인형 크기 — "소형"(손바닥~20cm), "중형"(20~40cm), "대형"(40cm 이상)
+- licensed: 유명 캐릭터/정품 IP로 보이면 true, 무명 봉제인형이면 false
 
-규칙:
-- 한국 시장 기준(다이소, 문구점, 온라인 마켓 등)의 일반 소매가로 추정해.
-- 정품 캐릭터 인형이면 그 점을 반영하고, 무명 봉제인형이면 크기·품질로 추정해.
-- 사진만으로는 정확한 가격을 알 수 없으니 무리하게 단정하지 마. 불확실하면 confidence를 "low"로.
-- 가격은 원 단위 정수로. (예: 5000)
-- "note"에는 참고 사항을 한 줄로 (예: 정품 가정 / 사이즈 추정 / 중고 시세 등). 없으면 빈 문자열.
+그다음 아래 한국 시세 기준표에 맞춰 가격을 정해:
+- 소형 + 무명: 2,000 ~ 4,000원
+- 중형 + 무명: 4,000 ~ 9,000원
+- 대형 + 무명: 10,000 ~ 20,000원
+- 소형 + 정품: 6,000 ~ 13,000원
+- 중형 + 정품: 13,000 ~ 28,000원
+- 대형 + 정품/한정판: 28,000 ~ 60,000원
+※ 위는 가이드라인. 특별히 유명·희귀하면 더 높게, 조잡하면 더 낮게 조정해.
+※ 같은 무명이라도 크기가 다르면 가격도 분명히 다르게 줘.
+
+그리고 채워:
+- item: 무엇인지 (캐릭터/종류 + 추정 크기)
+- priceMin / priceMax / priceEstimate: 원 단위 정수, estimate는 min~max 사이
+- confidence: 정품이라 특정 쉬우면 "high", 일반적이면 "medium", 무명/불명확하면 "low"
+- reason: 크기·정품여부·품질을 근거로 왜 그 가격인지
+- note: 참고 한 줄 (정품 가정/사이즈 추정 등). 없으면 빈 문자열.
 `;
 
 export async function POST(req: Request) {
