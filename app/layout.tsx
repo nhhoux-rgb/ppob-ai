@@ -34,6 +34,9 @@ export const metadata: Metadata = {
     title: "뽑AI · 인형뽑기 AI 공략",
     description: "사진 한 장으로 가장 뽑기 쉬운 인형을 AI가 찾아드립니다.",
   },
+  verification: {
+    google: "0KIN_TS8mAx3eY1Gqs5ygl_EZIQD3NRbSUByhbh9F0k",
+  },
   other: {
     "google-adsense-account": "ca-pub-2652292791594458",
   },
