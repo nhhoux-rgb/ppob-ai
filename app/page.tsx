@@ -3,6 +3,7 @@
 import { useRef, useState, type ChangeEvent } from "react";
 import SiteFooter from "./site-footer";
 import VisitorCount from "./visitor-count";
+import ToolTabs from "./tool-tabs";
 
 type Target = {
   rank: number;
@@ -120,6 +121,8 @@ export default function Home() {
             Beta
           </span>
         </header>
+
+        <ToolTabs />
 
         <section className="mb-5">
           <h1 className="text-[1.75rem] font-bold leading-tight tracking-tight sm:text-[1.875rem]">
