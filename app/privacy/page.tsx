@@ -152,10 +152,10 @@ export default function PrivacyPage() {
             <p>
               개인정보 관련 문의는{" "}
               <a
-                href="mailto:nhhoux@gmail.com"
+                href="mailto:pickupai2026@gmail.com"
                 className="font-medium text-violet-600 underline underline-offset-2"
               >
-                nhhoux@gmail.com
+                pickupai2026@gmail.com
               </a>{" "}
               으로 연락해 주세요.
             </p>
