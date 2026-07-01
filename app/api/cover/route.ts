@@ -35,12 +35,11 @@ const MAX_USER_PROMPT = 600;
 // 고정 제약(선명·무텍스트·표지용)은 항상 유지하고, 사용자 문구는 추가 지시로 덧붙인다.
 function buildPrompt(userPrompt: string): string {
   const base = [
-    "Create a premium, photorealistic COVER background for a Korean real-estate proposal/report — a full-bleed, cinematic architectural scene like the cover of a high-end brochure.",
-    "CRITICAL: keep the provided architectural rendering SHARP, crisp, photorealistic and highly detailed; preserve its real structures and materials. Do NOT blur, soften, or repaint it.",
-    "IMPORTANT: remove any signage, banners, billboards, screens or text on or around the buildings — all surfaces must be clean and blank.",
-    "Fill the frame naturally with real depth and professional lighting — it must NOT look like a small cut-out floating in empty space.",
-    "Design it like a professional graphic designer: elegant cinematic composition, smooth gradients and lighting, and a clean, calmer area kept as open negative space so a title can be added later. Fully composed edge to edge, polished and uncluttered — not a plain recolor.",
-    "By default use a clean, bright, refined professional color scheme, unless the user's request below asks for something different.",
+    "Turn the provided building rendering into a DESIGNED PRESENTATION COVER BACKGROUND for a real-estate report (like a PowerPoint title-slide background). This is a graphic-design LAYOUT, NOT a full photograph.",
+    "Do NOT fill the whole frame with the building. Instead SHRINK the building and place it as ONE element occupying only part of the frame — for example the lower portion or one side — keeping it sharp and realistic but smaller.",
+    "The MOST IMPORTANT requirement: leave a LARGE, clean, empty area (a smooth gradient or simple tinted space, roughly 40-60% of the frame) as open room for a title to be added later. This big empty title space is essential — without it the image is wrong.",
+    "Extend the scene into a smooth, simple designed backdrop (gentle gradient sky / soft color field) around the building. Remove any signage, banners or text on the buildings.",
+    "Keep it minimal, modern and polished, like a professional corporate report cover. By default use a clean, bright, refined color scheme, unless the user's request below asks otherwise.",
   ];
   if (userPrompt) {
     base.push(
@@ -49,7 +48,7 @@ function buildPrompt(userPrompt: string): string {
   }
   base.push(NO_TEXT_CLAUSE);
   base.push(
-    "The result must look exactly like a finished premium real-estate report cover — just completely without any text, letters, or logos."
+    "Again: this must look like a report/PPT COVER background — a small-ish building plus a large clean empty title area — NOT a full-frame architectural photo, and with absolutely no text or logos."
   );
   return base.join(" ");
 }
