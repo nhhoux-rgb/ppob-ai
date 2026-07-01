@@ -50,14 +50,14 @@ const NO_TEXT_CLAUSE =
 
 function buildPrompt(o: { colorTone: string; placement: string }): string {
   return [
-    "Design a COMPLETE, fully finished COVER background for a premium Korean real-estate proposal/report — magazine/brochure-cover quality, intentionally composed edge to edge.",
-    "CRITICAL: keep the provided architectural rendering SHARP, crisp, photorealistic and highly detailed; preserve its real structures and materials. Do NOT blur, fog, soften, or repaint it.",
-    "IMPORTANT: remove any signage, banners, billboards, screens or text that appear on or around the buildings — all surfaces must be clean and blank.",
-    `${PLACEMENTS[o.placement]} Integrate the building naturally into the scene, grounded on its base/ground line — it must NOT look like a small cut-out floating in empty space.`,
+    "Create a premium, photorealistic COVER background for a Korean real-estate proposal/report — a full-bleed, cinematic architectural scene like the cover of a high-end brochure.",
+    "CRITICAL: keep the provided architectural rendering SHARP, crisp, photorealistic and highly detailed; preserve its real structures and materials. Do NOT blur, soften, or repaint it.",
+    "IMPORTANT: remove any signage, banners, billboards, screens or text on or around the buildings — all surfaces must be clean and blank.",
+    `${PLACEMENTS[o.placement]} Let the scene fill the frame naturally with real depth and professional lighting — it must NOT look like a small cut-out floating in empty space.`,
     `Refined color scheme based on ${COLOR_TONES[o.colorTone]}.`,
-    "Fully design the rest of the frame like a professional graphic designer would: rich layered gradients, soft depth and lighting/glow, and tasteful modern graphic accents (flowing lines, subtle geometric patterns, delicate light particles). Do NOT leave large flat empty dead areas — the whole cover should feel deliberately designed — while still keeping one calmer, uncluttered region with open space for a title to be added later.",
+    "Design it like a professional graphic designer: elegant cinematic composition, smooth gradients and lighting, and a clean, calmer tinted panel area (for example a soft diagonal or side panel) kept as open negative space so a title can be added later. Fully composed edge to edge, polished and uncluttered — not a plain recolor.",
     NO_TEXT_CLAUSE,
-    "The result must look like a polished, premium report cover made by a professional designer — not a plain recolor and not a photo filter.",
+    "The result must look exactly like a finished premium real-estate report cover — just completely without any text, letters, or logos.",
   ].join(" ");
 }
 
