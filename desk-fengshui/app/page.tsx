@@ -1,6 +1,9 @@
 "use client";
 
 import { useRef, useState, type ChangeEvent } from "react";
+import SiteFooter from "./site-footer";
+import ShareButton from "./share-button";
+import SharePageButton from "./share-page-button";
 
 type Item = {
   category: string;
@@ -91,12 +94,15 @@ export default function Home() {
             <CompassIcon className="h-6 w-6" />
             책상풍수
           </span>
-          <span
-            className="rounded-full px-3 py-1 text-xs font-semibold"
-            style={{ backgroundColor: "#ecfdf5", color: "#047857" }}
-          >
-            Beta
-          </span>
+          <div className="flex items-center gap-2">
+            <SharePageButton />
+            <span
+              className="rounded-full px-3 py-1 text-xs font-semibold"
+              style={{ backgroundColor: "#ecfdf5", color: "#047857" }}
+            >
+              Beta
+            </span>
+          </div>
         </header>
 
         <section className="mb-5">
@@ -399,11 +405,16 @@ export default function Home() {
           </section>
         )}
 
+        {result && !loading && (
+          <ShareButton text="🧭 내 책상 풍수 점수는? 책상 사진 한 장으로 재물운·집중력·건강운을 AI가 봐줘요" />
+        )}
+
         <footer className="mt-8 pb-6 text-center text-xs leading-relaxed text-zinc-400">
           <p>
             재미로 보는 풍수 분석이에요. 실제 운세나 과학적 사실과는 무관하니
             가볍게 즐겨 주세요.
           </p>
+          <SiteFooter />
         </footer>
       </main>
     </div>
