@@ -124,7 +124,7 @@ export async function POST(req: Request) {
 
     // gpt-image-1 edits: 업로드 이미지를 조건으로 새 배경을 생성한다.
     const res = await client.images.edit({
-      model: "gpt-image-1",
+      model: "gpt-image-1.5",
       image: file,
       prompt: buildPrompt({ colorTone, placement }),
       size,
