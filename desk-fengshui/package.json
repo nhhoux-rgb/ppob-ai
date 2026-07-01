@@ -11,6 +11,7 @@
   "dependencies": {
     "@upstash/redis": "^1.38.0",
     "@vercel/analytics": "^2.0.1",
+    "html-to-image": "^1.11.13",
     "next": "16.2.9",
     "openai": "^6.45.0",
     "react": "19.2.4",

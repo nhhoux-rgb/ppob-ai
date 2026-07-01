@@ -5,6 +5,7 @@ import SiteFooter from "./site-footer";
 import VisitorCount from "./visitor-count";
 import ShareButton from "./share-button";
 import SharePageButton from "./share-page-button";
+import SaveImageButton from "./save-image-button";
 
 type Item = {
   category: string;
@@ -55,6 +56,7 @@ export default function Home() {
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const replaceInputRef = useRef<HTMLInputElement>(null);
+  const resultRef = useRef<HTMLElement>(null);
 
   function handleImage(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -273,7 +275,10 @@ export default function Home() {
         )}
 
         {result && !loading && (
-          <section className="overflow-hidden rounded-3xl border border-zinc-100 bg-white shadow-[0_4px_24px_rgb(0,0,0,0.06)]">
+          <section
+            ref={resultRef}
+            className="overflow-hidden rounded-3xl border border-zinc-100 bg-white shadow-[0_4px_24px_rgb(0,0,0,0.06)]"
+          >
             {/* 종합 점수 */}
             <div
               className="flex items-center gap-4 px-5 py-5"
@@ -455,6 +460,10 @@ export default function Home() {
                 )}
               </div>
             )}
+            {/* 저장 이미지용 워터마크 (카드를 캡처할 때 함께 담김) */}
+            <div className="border-t border-zinc-100 px-4 py-3 text-center text-[11px] font-semibold text-emerald-600">
+              🧭 책상풍수 · ppob-ai-7k27.vercel.app
+            </div>
           </section>
         )}
 
@@ -466,6 +475,10 @@ export default function Home() {
                 : `🧭 내 책상 풍수 점수는 ${result.overallScore}점! 네 책상도 AI로 봐봐`
             }
           />
+        )}
+
+        {result && !loading && (
+          <SaveImageButton targetRef={resultRef} />
         )}
 
         <footer className="mt-8 pb-6 text-center text-xs leading-relaxed text-zinc-400">
