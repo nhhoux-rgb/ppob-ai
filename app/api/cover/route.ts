@@ -47,13 +47,13 @@ const DENSITIES: Record<string, string> = {
 };
 
 const SAFE_AREAS: Record<string, string> = {
-  left: "Keep the LEFT 40% of the image visually calm and slightly darkened with a smooth gradient, as empty space reserved for a title added later. Push visual interest to the right side.",
+  left: "Reserve the LEFT ~40% as clean, open gradient space free of buildings and decorations, for a title added later. Shift the building rendering toward the right/bottom.",
   center:
-    "Keep the CENTER of the image visually calm with a soft darkened gradient/vignette, as empty space reserved for a title added later.",
+    "Reserve a clean, open gradient band across the CENTER, free of buildings and busy decorations, for a title added later.",
   right:
-    "Keep the RIGHT 40% of the image visually calm and slightly darkened with a smooth gradient, as empty space reserved for a title added later. Push visual interest to the left side.",
+    "Reserve the RIGHT ~40% as clean, open gradient space free of buildings and decorations, for a title added later. Shift the building rendering toward the left/bottom.",
   bottom:
-    "Keep the BOTTOM third of the image visually calm with a smooth darkened gradient, as empty space reserved for a title added later.",
+    "Keep the building rendering as a strip in the lower portion and reserve the space just above it as clean, open gradient area for a title added later.",
   full: "Use the full frame as a balanced composition; no specific reserved title area.",
 };
 
@@ -74,14 +74,16 @@ function buildPrompt(o: {
   safeArea: string;
 }): string {
   return [
-    "Transform the provided aerial/bird's-eye architectural rendering into a polished, abstract background image for the COVER of a professional real-estate report.",
-    "Treat the uploaded rendering as the base subject: keep its overall layout and structures recognizable, but stylize it into an elegant, atmospheric cover backdrop (not a literal photo).",
-    `Color palette: ${COLOR_TONES[o.colorTone]}.`,
+    "Create a clean, modern background for the COVER of a Korean real-estate proposal/report, in a polished corporate brochure style.",
+    "CRITICAL: keep the provided architectural rendering SHARP, crisp, photorealistic and highly detailed. Do NOT blur, fog, haze, soften, repaint, or turn it into an abstract/painterly image. Preserve its real structures and materials exactly.",
+    "Composition: place the building rendering as a clean, sharp panoramic strip along the LOWER portion of the frame, sitting on the ground/water line as in the original.",
+    `Fill the remaining space, especially the upper area, with a smooth clean gradient sky in ${COLOR_TONES[o.colorTone]}, as generous open negative space.`,
+    "Add refined, minimal corporate design accents: a few thin elegant curved arc/ribbon lines sweeping through one upper corner, a faint halftone dot pattern in one corner, and delicate flowing wave/mesh lines near a lower corner. Keep these decorations subtle, tasteful and clearly secondary to the building.",
     `Overall mood: ${MOODS[o.mood]}.`,
     `Composition density: ${DENSITIES[o.density]}.`,
     SAFE_AREAS[o.safeArea],
     NO_TEXT_CLAUSE,
-    "Output must be usable as-is behind a title that the user will add later in PowerPoint.",
+    "The result must look like a professionally designed report cover (like a corporate brochure), NOT a photo filter or a foggy dream. Usable as-is behind a title added later in PowerPoint.",
   ].join(" ");
 }
 
