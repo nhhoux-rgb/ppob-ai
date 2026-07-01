@@ -13,13 +13,26 @@ type Item = {
   advice: string;
 };
 
+type AddItem = {
+  item: string;
+  place: string;
+  reason: string;
+};
+
+type RemoveItem = {
+  item: string;
+  reason: string;
+};
+
 type Result = {
+  nickname?: string;
   overallScore: number;
   grade: string;
   summary: string;
   items: Item[];
-  lucky?: string[];
-  caution?: string[];
+  addItems?: AddItem[];
+  removeItems?: RemoveItem[];
+  fortune?: string;
   tip?: string;
 };
 
@@ -281,7 +294,12 @@ export default function Home() {
                     종합 풍수 점수
                   </span>
                 </div>
-                <p className="mt-2 text-sm font-medium leading-snug text-zinc-700">
+                {result.nickname && (
+                  <p className="mt-2 text-base font-bold leading-snug text-zinc-900">
+                    “{result.nickname}”
+                  </p>
+                )}
+                <p className="mt-1 text-sm font-medium leading-snug text-zinc-600">
                   {result.summary}
                 </p>
               </div>
@@ -333,52 +351,86 @@ export default function Home() {
               </div>
             </div>
 
-            {/* 행운 요소 / 주의 요소 */}
-            {((result.lucky && result.lucky.length > 0) ||
-              (result.caution && result.caution.length > 0)) && (
-              <div className="grid gap-px border-t border-zinc-100 bg-zinc-100 sm:grid-cols-2">
-                {result.lucky && result.lucky.length > 0 && (
-                  <div className="bg-white px-4 py-4">
-                    <div className="mb-2 flex items-center gap-1.5">
-                      <SparkleIcon className="h-4 w-4" />
-                      <p className="text-sm font-bold text-emerald-700">
-                        기운을 살리는 요소
-                      </p>
-                    </div>
-                    <ul className="space-y-1">
-                      {result.lucky.map((item) => (
-                        <li
-                          key={item}
-                          className="flex items-start gap-2 text-xs leading-relaxed text-zinc-500"
-                        >
-                          <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400" />
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                {result.caution && result.caution.length > 0 && (
-                  <div className="bg-white px-4 py-4">
-                    <div className="mb-2 flex items-center gap-1.5">
-                      <XCircleIcon className="h-4 w-4" style={{ color: "#d97706" }} />
-                      <p className="text-sm font-bold" style={{ color: "#b45309" }}>
-                        기운을 흐리는 요소
-                      </p>
-                    </div>
-                    <ul className="space-y-1">
-                      {result.caution.map((item) => (
-                        <li
-                          key={item}
-                          className="flex items-start gap-2 text-xs leading-relaxed text-zinc-500"
-                        >
-                          <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" />
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+            {/* 이걸 놓아보세요 (구체적 추가 추천) */}
+            {result.addItems && result.addItems.length > 0 && (
+              <div className="border-t border-zinc-100 px-4 py-4">
+                <div className="mb-3 flex items-center gap-1.5">
+                  <SparkleIcon className="h-4 w-4" />
+                  <p className="text-sm font-bold text-emerald-700">
+                    이걸 놓아보세요
+                  </p>
+                </div>
+                <ul className="space-y-2.5">
+                  {result.addItems.map((a, i) => (
+                    <li
+                      key={`add-${i}-${a.item}`}
+                      className="flex items-start gap-2.5 rounded-xl bg-emerald-50 px-3 py-2.5"
+                    >
+                      <span className="mt-0.5 text-base leading-none">➕</span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[13px] font-bold text-emerald-900">
+                          {a.item}
+                          <span className="ml-1.5 rounded-md bg-emerald-100 px-1.5 py-0.5 text-[11px] font-semibold text-emerald-700">
+                            {a.place}
+                          </span>
+                        </p>
+                        <p className="mt-1 text-xs leading-relaxed text-emerald-800/80">
+                          {a.reason}
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* 이건 치우세요 (구체적 제거 추천) */}
+            {result.removeItems && result.removeItems.length > 0 && (
+              <div className="border-t border-zinc-100 px-4 py-4">
+                <div className="mb-3 flex items-center gap-1.5">
+                  <XCircleIcon className="h-4 w-4" style={{ color: "#d97706" }} />
+                  <p className="text-sm font-bold" style={{ color: "#b45309" }}>
+                    이건 치우세요
+                  </p>
+                </div>
+                <ul className="space-y-2.5">
+                  {result.removeItems.map((r, i) => (
+                    <li
+                      key={`rm-${i}-${r.item}`}
+                      className="flex items-start gap-2.5 rounded-xl bg-amber-50 px-3 py-2.5"
+                    >
+                      <span className="mt-0.5 text-base leading-none">🧹</span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[13px] font-bold text-amber-900">
+                          {r.item}
+                        </p>
+                        <p className="mt-1 text-xs leading-relaxed text-amber-800/80">
+                          {r.reason}
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* 오늘의 책상 운세 */}
+            {result.fortune && (
+              <div className="border-t border-zinc-100 px-4 py-4">
+                <div
+                  className="rounded-2xl px-4 py-3.5"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)",
+                  }}
+                >
+                  <p className="mb-1 flex items-center gap-1.5 text-xs font-bold text-emerald-700">
+                    🔮 오늘의 책상 운세
+                  </p>
+                  <p className="text-[13px] font-medium leading-relaxed text-emerald-900">
+                    {result.fortune}
+                  </p>
+                </div>
               </div>
             )}
 
@@ -407,7 +459,13 @@ export default function Home() {
         )}
 
         {result && !loading && (
-          <ShareButton text="🧭 내 책상 풍수 점수는? 책상 사진 한 장으로 재물운·집중력·건강운을 AI가 봐줘요" />
+          <ShareButton
+            text={
+              result.nickname
+                ? `🧭 내 책상은 “${result.nickname}” (${result.overallScore}점)! 네 책상 풍수 점수도 볼래?`
+                : `🧭 내 책상 풍수 점수는 ${result.overallScore}점! 네 책상도 AI로 봐봐`
+            }
+          />
         )}
 
         <footer className="mt-8 pb-6 text-center text-xs leading-relaxed text-zinc-400">
