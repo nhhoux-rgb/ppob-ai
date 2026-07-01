@@ -2,6 +2,7 @@
 
 import { useRef, useState, type ChangeEvent } from "react";
 import SiteFooter from "./site-footer";
+import VisitorCount from "./visitor-count";
 import ShareButton from "./share-button";
 import SharePageButton from "./share-page-button";
 
@@ -410,6 +411,7 @@ export default function Home() {
         )}
 
         <footer className="mt-8 pb-6 text-center text-xs leading-relaxed text-zinc-400">
+          <VisitorCount />
           <p>
             재미로 보는 풍수 분석이에요. 실제 운세나 과학적 사실과는 무관하니
             가볍게 즐겨 주세요.
