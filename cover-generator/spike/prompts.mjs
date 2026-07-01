@@ -77,10 +77,37 @@ export const SAFE_AREAS = {
 const NO_TEXT_CLAUSE =
   "ABSOLUTELY NO text of any kind: no words, no letters, no Korean characters, no English words, no gibberish text, no captions, no labels, no numbers, no dates. NO logos, NO watermarks, NO signatures, NO signage, NO UI elements, NO typography whatsoever. The image must be a pure clean background only.";
 
+// 배치 조절 어휘(route.ts와 동일). 지정 안 하면 기본값 사용.
+export const PLACEMENTS = {
+  "bottom-left": "Position the building rendering anchored in the LOWER-LEFT of the frame.",
+  "bottom-center": "Position the building rendering centered along the LOWER part of the frame.",
+  "bottom-right": "Position the building rendering anchored in the LOWER-RIGHT of the frame.",
+  "bottom-wide": "Position the building rendering as a wide panoramic strip spanning the full LOWER part of the frame.",
+};
+export const SCALES = {
+  small: "Render the building relatively small, occupying roughly the lower quarter of the frame, leaving lots of open sky.",
+  medium: "Render the building at a moderate size, occupying roughly the lower third of the frame.",
+  large: "Render the building large and prominent, occupying up to the lower half of the frame.",
+};
+export const GRADIENTS = {
+  "top-dark": "Make the gradient darkest at the TOP and gradually lighter toward the building.",
+  "bottom-dark": "Make the gradient lightest at the TOP and gradually deeper toward the BOTTOM.",
+  diagonal: "Make the gradient sweep diagonally from a deeper upper corner to a lighter opposite corner.",
+  radial: "Use a soft radial gradient with a gentle bright glow behind the building, deepening toward the edges.",
+};
+
 /**
  * 하나의 옵션 조합에 대한 최종 프롬프트를 만든다.
  */
-export function buildPrompt({ colorTone, mood, density, safeArea }) {
+export function buildPrompt({
+  colorTone,
+  mood,
+  density,
+  safeArea,
+  placement = "bottom-center",
+  scale = "medium",
+  gradient = "top-dark",
+}) {
   const tone = COLOR_TONES[colorTone];
   const moodDesc = MOODS[mood];
   const densityDesc = DENSITIES[density];
@@ -89,8 +116,8 @@ export function buildPrompt({ colorTone, mood, density, safeArea }) {
   return [
     "Create a clean, modern background for the COVER of a Korean real-estate proposal/report, in a polished corporate brochure style.",
     "CRITICAL: keep the provided architectural rendering SHARP, crisp, photorealistic and highly detailed. Do NOT blur, fog, haze, soften, repaint, or turn it into an abstract/painterly image. Preserve its real structures and materials exactly.",
-    "Composition: place the building rendering as a clean, sharp panoramic strip along the LOWER portion of the frame, sitting on the ground/water line as in the original.",
-    `Fill the remaining space, especially the upper area, with a smooth clean gradient sky in ${tone}, as generous open negative space.`,
+    `Composition: ${PLACEMENTS[placement]} ${SCALES[scale]} Keep it sharp and sitting naturally on its ground/water line.`,
+    `Fill the remaining open space with a smooth clean gradient in ${tone}, as generous negative space. ${GRADIENTS[gradient]}`,
     "Add refined, minimal corporate design accents: a few thin elegant curved arc/ribbon lines sweeping through one upper corner, a faint halftone dot pattern in one corner, and delicate flowing wave/mesh lines near a lower corner. Keep these decorations subtle, tasteful and clearly secondary to the building.",
     `Overall mood: ${moodDesc}.`,
     `Composition density: ${densityDesc}.`,

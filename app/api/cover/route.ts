@@ -57,6 +57,29 @@ const SAFE_AREAS: Record<string, string> = {
   full: "Use the full frame as a balanced composition; no specific reserved title area.",
 };
 
+// 건물 배치 위치.
+const PLACEMENTS: Record<string, string> = {
+  "bottom-left": "Position the building rendering anchored in the LOWER-LEFT of the frame.",
+  "bottom-center": "Position the building rendering centered along the LOWER part of the frame.",
+  "bottom-right": "Position the building rendering anchored in the LOWER-RIGHT of the frame.",
+  "bottom-wide": "Position the building rendering as a wide panoramic strip spanning the full LOWER part of the frame.",
+};
+
+// 건물 크기(프레임에서 차지하는 비중).
+const SCALES: Record<string, string> = {
+  small: "Render the building relatively small, occupying roughly the lower quarter of the frame, leaving lots of open sky.",
+  medium: "Render the building at a moderate size, occupying roughly the lower third of the frame.",
+  large: "Render the building large and prominent, occupying up to the lower half of the frame.",
+};
+
+// 그라데이션 방향/스타일.
+const GRADIENTS: Record<string, string> = {
+  "top-dark": "Make the gradient darkest at the TOP and gradually lighter toward the building.",
+  "bottom-dark": "Make the gradient lightest at the TOP and gradually deeper toward the BOTTOM.",
+  diagonal: "Make the gradient sweep diagonally from a deeper upper corner to a lighter opposite corner.",
+  radial: "Use a soft radial gradient with a gentle bright glow behind the building, deepening toward the edges.",
+};
+
 // gpt-image-1 지원 크기 중 목표 비율에 가장 가까운 것.
 const RATIO_SIZE: Record<string, "1536x1024" | "1024x1536"> = {
   "a4-landscape": "1536x1024",
@@ -72,12 +95,15 @@ function buildPrompt(o: {
   mood: string;
   density: string;
   safeArea: string;
+  placement: string;
+  scale: string;
+  gradient: string;
 }): string {
   return [
     "Create a clean, modern background for the COVER of a Korean real-estate proposal/report, in a polished corporate brochure style.",
     "CRITICAL: keep the provided architectural rendering SHARP, crisp, photorealistic and highly detailed. Do NOT blur, fog, haze, soften, repaint, or turn it into an abstract/painterly image. Preserve its real structures and materials exactly.",
-    "Composition: place the building rendering as a clean, sharp panoramic strip along the LOWER portion of the frame, sitting on the ground/water line as in the original.",
-    `Fill the remaining space, especially the upper area, with a smooth clean gradient sky in ${COLOR_TONES[o.colorTone]}, as generous open negative space.`,
+    `Composition: ${PLACEMENTS[o.placement]} ${SCALES[o.scale]} Keep it sharp and sitting naturally on its ground/water line.`,
+    `Fill the remaining open space with a smooth clean gradient in ${COLOR_TONES[o.colorTone]}, as generous negative space. ${GRADIENTS[o.gradient]}`,
     "Add refined, minimal corporate design accents: a few thin elegant curved arc/ribbon lines sweeping through one upper corner, a faint halftone dot pattern in one corner, and delicate flowing wave/mesh lines near a lower corner. Keep these decorations subtle, tasteful and clearly secondary to the building.",
     `Overall mood: ${MOODS[o.mood]}.`,
     `Composition density: ${DENSITIES[o.density]}.`,
@@ -113,7 +139,18 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { imageBase64, colorTone, mood, density, safeArea, ratio } = body ?? {};
+    const {
+      imageBase64,
+      colorTone,
+      mood,
+      density,
+      safeArea,
+      ratio,
+      // 배치 조절 옵션(없으면 기본값).
+      placement = "bottom-center",
+      scale = "medium",
+      gradient = "top-dark",
+    } = body ?? {};
 
     // ── 입력 검증 ──
     if (!imageBase64 || typeof imageBase64 !== "string" || !imageBase64.startsWith("data:image/")) {
@@ -125,7 +162,15 @@ export async function POST(req: Request) {
         { status: 413 }
       );
     }
-    if (!COLOR_TONES[colorTone] || !MOODS[mood] || !DENSITIES[density] || !SAFE_AREAS[safeArea]) {
+    if (
+      !COLOR_TONES[colorTone] ||
+      !MOODS[mood] ||
+      !DENSITIES[density] ||
+      !SAFE_AREAS[safeArea] ||
+      !PLACEMENTS[placement] ||
+      !SCALES[scale] ||
+      !GRADIENTS[gradient]
+    ) {
       return Response.json({ error: "선택 옵션이 올바르지 않습니다." }, { status: 400 });
     }
     const size = RATIO_SIZE[ratio] ?? "1536x1024";
@@ -144,7 +189,7 @@ export async function POST(req: Request) {
     const res = await client.images.edit({
       model: "gpt-image-1",
       image: file,
-      prompt: buildPrompt({ colorTone, mood, density, safeArea }),
+      prompt: buildPrompt({ colorTone, mood, density, safeArea, placement, scale, gradient }),
       size,
       quality: "medium",
       n: 1,

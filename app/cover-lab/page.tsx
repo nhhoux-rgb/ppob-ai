@@ -23,6 +23,26 @@ const SAFE_AREAS = [
   { key: "full", label: "전체(없음)" },
 ] as const;
 
+const PLACEMENTS = [
+  { key: "bottom-left", label: "왼쪽 아래" },
+  { key: "bottom-center", label: "가운데 아래" },
+  { key: "bottom-right", label: "오른쪽 아래" },
+  { key: "bottom-wide", label: "하단 전체(파노라마)" },
+] as const;
+
+const SCALES = [
+  { key: "small", label: "작게" },
+  { key: "medium", label: "보통" },
+  { key: "large", label: "크게" },
+] as const;
+
+const GRADIENTS = [
+  { key: "top-dark", label: "위쪽 진하게" },
+  { key: "bottom-dark", label: "아래쪽 진하게" },
+  { key: "diagonal", label: "대각선" },
+  { key: "radial", label: "가운데 밝게" },
+] as const;
+
 // 미리보기 전용 안전영역 점선 위치(다운로드 이미지엔 미포함).
 const SAFE_BOX: Record<string, React.CSSProperties | null> = {
   left: { left: "3%", top: "10%", width: "37%", height: "80%" },
@@ -43,6 +63,9 @@ export default function CoverLab() {
   const [mood, setMood] = useState<string>("Corporate");
   const [density, setDensity] = useState<string>("Balanced");
   const [safeArea, setSafeArea] = useState<string>("left");
+  const [placement, setPlacement] = useState<string>("bottom-center");
+  const [scale, setScale] = useState<string>("medium");
+  const [gradient, setGradient] = useState<string>("top-dark");
   const [showGuide, setShowGuide] = useState(true);
 
   const fileRef = useRef<HTMLInputElement>(null);
@@ -69,7 +92,17 @@ export default function CoverLab() {
       const res = await fetch("/api/cover", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageBase64: image, colorTone, mood, density, safeArea, ratio }),
+        body: JSON.stringify({
+          imageBase64: image,
+          colorTone,
+          mood,
+          density,
+          safeArea,
+          ratio,
+          placement,
+          scale,
+          gradient,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "생성 실패");
@@ -145,6 +178,27 @@ export default function CoverLab() {
             {SAFE_AREAS.map((s) => (
               <Chip key={s.key} active={safeArea === s.key} onClick={() => setSafeArea(s.key)}>
                 {s.label}
+              </Chip>
+            ))}
+          </OptionRow>
+          <OptionRow label="건물 위치">
+            {PLACEMENTS.map((p) => (
+              <Chip key={p.key} active={placement === p.key} onClick={() => setPlacement(p.key)}>
+                {p.label}
+              </Chip>
+            ))}
+          </OptionRow>
+          <OptionRow label="건물 크기">
+            {SCALES.map((s) => (
+              <Chip key={s.key} active={scale === s.key} onClick={() => setScale(s.key)}>
+                {s.label}
+              </Chip>
+            ))}
+          </OptionRow>
+          <OptionRow label="그라데이션">
+            {GRADIENTS.map((g) => (
+              <Chip key={g.key} active={gradient === g.key} onClick={() => setGradient(g.key)}>
+                {g.label}
               </Chip>
             ))}
           </OptionRow>
