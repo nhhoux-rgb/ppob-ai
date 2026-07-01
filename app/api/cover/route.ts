@@ -1,4 +1,4 @@
-import OpenAI, { toFile } from "openai";
+import OpenAI from "openai";
 
 export const runtime = "nodejs";
 // 이미지 생성은 최대 몇 십 초 걸릴 수 있어 여유를 둔다.
@@ -35,11 +35,11 @@ const MAX_USER_PROMPT = 600;
 // 고정 제약(선명·무텍스트·표지용)은 항상 유지하고, 사용자 문구는 추가 지시로 덧붙인다.
 function buildPrompt(userPrompt: string): string {
   const base = [
-    "Turn the provided building rendering into a DESIGNED PRESENTATION COVER BACKGROUND for a real-estate report (like a PowerPoint title-slide background). This is a graphic-design LAYOUT, NOT a full photograph.",
-    "Do NOT fill the whole frame with the building. Instead SHRINK the building and place it as ONE element occupying only part of the frame — for example the lower portion or one side — keeping it sharp and realistic but smaller.",
-    "The MOST IMPORTANT requirement: leave a LARGE, clean, empty area (a smooth gradient or simple tinted space, roughly 40-60% of the frame) as open room for a title to be added later. This big empty title space is essential — without it the image is wrong.",
-    "Extend the scene into a smooth, simple designed backdrop (gentle gradient sky / soft color field) around the building. Remove any signage, banners or text on the buildings.",
-    "Keep it minimal, modern and polished, like a professional corporate report cover. By default use a clean, bright, refined color scheme, unless the user's request below asks otherwise.",
+    "Using the attached architectural rendering as the reference for the building, DESIGN a premium real-estate report COVER background — a polished PowerPoint title-slide background.",
+    "Recreate the building from the reference faithfully and realistically, then compose a finished cover around it like a professional graphic designer: an elegant background scene or smooth gradient, depth and lighting, and tasteful modern styling.",
+    "Place the building as part of a designed layout (typically toward one side or the lower area), and keep a clean, uncluttered area as generous open space for a title to be added later.",
+    "The overall result should look like a high-end proposal/brochure cover — modern, elegant and intentionally composed edge to edge — not a plain photo and not an empty faded image.",
+    "By default use a clean, bright, refined professional color scheme, unless the user's request below asks for something different.",
   ];
   if (userPrompt) {
     base.push(
@@ -48,7 +48,7 @@ function buildPrompt(userPrompt: string): string {
   }
   base.push(NO_TEXT_CLAUSE);
   base.push(
-    "Again: this must look like a report/PPT COVER background — a small-ish building plus a large clean empty title area — NOT a full-frame architectural photo, and with absolutely no text or logos."
+    "Absolutely no text, letters, numbers, captions or logos anywhere in the image — it is a pure background that the user will add their own title to."
   );
   return base.join(" ");
 }
@@ -97,27 +97,36 @@ export async function POST(req: Request) {
     }
     const size = RATIO_SIZE[ratio] ?? "1536x1024";
 
-    // ── data URL → 파일 ──
-    const comma = imageBase64.indexOf(",");
-    const meta = imageBase64.slice(5, comma); // e.g. "image/png;base64"
-    const mime = meta.split(";")[0] || "image/png";
-    const ext = mime.split("/")[1] || "png";
-    const buf = Buffer.from(imageBase64.slice(comma + 1), "base64");
-    const file = await toFile(buf, `upload.${ext}`, { type: mime });
-
     const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-    // gpt-image-1 edits: 업로드 이미지를 조건으로 새 배경을 생성한다.
-    const res = await client.images.edit({
-      model: "gpt-image-1.5",
-      image: file,
-      prompt: buildPrompt(cleanPrompt),
-      size,
-      quality: q,
-      n: 1,
+    // ChatGPT와 동일한 generative 방식:
+    // 업로드 이미지를 "참조"로 주고, image_generation 도구로 표지를 새로 구성해 생성한다.
+    // (기존 images.edit는 원본을 페이드/리컬러만 해서 표지 레이아웃을 못 만들었다.)
+    const response = await client.responses.create({
+      model: "gpt-4.1",
+      input: [
+        {
+          role: "user",
+          content: [
+            { type: "input_text", text: buildPrompt(cleanPrompt) },
+            { type: "input_image", image_url: imageBase64, detail: "high" },
+          ],
+        },
+      ],
+      tools: [
+        {
+          type: "image_generation",
+          model: "gpt-image-1.5",
+          quality: q,
+          size,
+          input_fidelity: "high", // 참조 건물을 알아볼 수 있게 반영
+        },
+      ],
+      tool_choice: { type: "image_generation" },
     });
 
-    const b64 = res.data?.[0]?.b64_json;
+    const imgCall = response.output.find((o) => o.type === "image_generation_call");
+    const b64 = imgCall && "result" in imgCall ? imgCall.result : null;
     if (!b64) {
       return Response.json({ error: "이미지를 받지 못했습니다." }, { status: 502 });
     }
