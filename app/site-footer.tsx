@@ -1,4 +1,5 @@
 import Link from "next/link";
+import SharePageButton from "./share-page-button";
 
 const LINKS = [
   { href: "/", label: "홈" },
@@ -10,16 +11,21 @@ const LINKS = [
 
 export default function SiteFooter() {
   return (
-    <nav className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
-      {LINKS.map((l) => (
-        <Link
-          key={l.href}
-          href={l.href}
-          className="font-medium text-zinc-400 underline-offset-2 transition hover:text-violet-600 hover:underline"
-        >
-          {l.label}
-        </Link>
-      ))}
-    </nav>
+    <div>
+      <div className="mt-4 flex justify-center">
+        <SharePageButton />
+      </div>
+      <nav className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+        {LINKS.map((l) => (
+          <Link
+            key={l.href}
+            href={l.href}
+            className="font-medium text-zinc-400 underline-offset-2 transition hover:text-violet-600 hover:underline"
+          >
+            {l.label}
+          </Link>
+        ))}
+      </nav>
+    </div>
   );
 }

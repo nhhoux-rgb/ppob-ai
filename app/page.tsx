@@ -5,6 +5,7 @@ import SiteFooter from "./site-footer";
 import VisitorCount from "./visitor-count";
 import ToolTabs from "./tool-tabs";
 import ShareButton from "./share-button";
+import SharePageButton from "./share-page-button";
 
 type Target = {
   rank: number;
@@ -115,12 +116,15 @@ export default function Home() {
           <span className="text-xl font-bold tracking-tight text-violet-600">
             뽑AI
           </span>
-          <span
-            className="rounded-full px-3 py-1 text-xs font-semibold"
-            style={{ backgroundColor: "#f5f3ff", color: "#6d28d9" }}
-          >
-            Beta
-          </span>
+          <div className="flex items-center gap-2">
+            <SharePageButton />
+            <span
+              className="rounded-full px-3 py-1 text-xs font-semibold"
+              style={{ backgroundColor: "#f5f3ff", color: "#6d28d9" }}
+            >
+              Beta
+            </span>
+          </div>
         </header>
 
         <ToolTabs />
