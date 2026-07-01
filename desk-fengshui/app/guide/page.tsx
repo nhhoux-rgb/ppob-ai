@@ -154,6 +154,30 @@ export default function GuidePage() {
                 집중력·학업운을 높이는 책상 풍수
               </Link>
             </li>
+            <li>
+              <Link
+                href="/guide/direction"
+                className="text-sm font-semibold text-emerald-600 underline underline-offset-2"
+              >
+                책상 방향 풍수 — 어느 쪽을 보고 앉아야 할까
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/guide/plants"
+                className="text-sm font-semibold text-emerald-600 underline underline-offset-2"
+              >
+                책상에 두면 좋은 식물 7가지
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/guide/color"
+                className="text-sm font-semibold text-emerald-600 underline underline-offset-2"
+              >
+                책상 풍수 색깔 — 재물운·집중력 높이는 색
+              </Link>
+            </li>
           </ul>
         </section>
 
