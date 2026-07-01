@@ -103,7 +103,8 @@ export async function POST(req: Request) {
     // 업로드 이미지를 "참조"로 주고, image_generation 도구로 표지를 새로 구성해 생성한다.
     // (기존 images.edit는 원본을 페이드/리컬러만 해서 표지 레이아웃을 못 만들었다.)
     const response = await client.responses.create({
-      model: "gpt-4.1",
+      // gpt-4.1(풀)은 조직 인증이 필요해 403이 난다. 인증 없이 쓰는 mini로 오케스트레이션.
+      model: "gpt-4.1-mini",
       input: [
         {
           role: "user",
