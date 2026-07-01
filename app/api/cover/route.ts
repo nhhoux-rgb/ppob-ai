@@ -30,54 +30,12 @@ const COLOR_TONES: Record<string, string> = {
   Gray: "neutral graphite and silver-gray tones",
 };
 
-const MOODS: Record<string, string> = {
-  Premium: "premium, high-end, refined and expensive-looking",
-  Corporate: "clean corporate, trustworthy, business-report appropriate",
-  Luxury: "luxurious, opulent, glossy and glamorous",
-  Modern: "modern, contemporary, sleek and current",
-  Minimal: "minimalist, restrained, lots of clean negative space",
-  Dark: "dark, dramatic, moody with deep shadows",
-};
-
-const DENSITIES: Record<string, string> = {
-  Simple: "very simple composition, generous empty space, uncluttered, calm",
-  Balanced: "balanced composition suitable for a real business report cover",
-  Dramatic:
-    "dramatic composition with light rays, gradients, layered depth and premium lighting effects",
-};
-
-const SAFE_AREAS: Record<string, string> = {
-  left: "Reserve the LEFT ~40% as clean, open gradient space free of buildings and decorations, for a title added later. Shift the building rendering toward the right/bottom.",
-  center:
-    "Reserve a clean, open gradient band across the CENTER, free of buildings and busy decorations, for a title added later.",
-  right:
-    "Reserve the RIGHT ~40% as clean, open gradient space free of buildings and decorations, for a title added later. Shift the building rendering toward the left/bottom.",
-  bottom:
-    "Keep the building rendering as a strip in the lower portion and reserve the space just above it as clean, open gradient area for a title added later.",
-  full: "Use the full frame as a balanced composition; no specific reserved title area.",
-};
-
-// 건물 배치 위치.
+// 건물 배치 위치 (사용자가 고르는 유일한 구도 옵션).
 const PLACEMENTS: Record<string, string> = {
-  "bottom-left": "Position the building rendering anchored in the LOWER-LEFT of the frame.",
-  "bottom-center": "Position the building rendering centered along the LOWER part of the frame.",
-  "bottom-right": "Position the building rendering anchored in the LOWER-RIGHT of the frame.",
-  "bottom-wide": "Position the building rendering as a wide panoramic strip spanning the full LOWER part of the frame.",
-};
-
-// 건물 크기(프레임에서 차지하는 비중).
-const SCALES: Record<string, string> = {
-  small: "Render the building relatively small, occupying roughly the lower quarter of the frame, leaving lots of open sky.",
-  medium: "Render the building at a moderate size, occupying roughly the lower third of the frame.",
-  large: "Render the building large and prominent, occupying up to the lower half of the frame.",
-};
-
-// 그라데이션 방향/스타일.
-const GRADIENTS: Record<string, string> = {
-  "top-dark": "Make the gradient darkest at the TOP and gradually lighter toward the building.",
-  "bottom-dark": "Make the gradient lightest at the TOP and gradually deeper toward the BOTTOM.",
-  diagonal: "Make the gradient sweep diagonally from a deeper upper corner to a lighter opposite corner.",
-  radial: "Use a soft radial gradient with a gentle bright glow behind the building, deepening toward the edges.",
+  "bottom-left": "Place the building rendering toward the LOWER-LEFT.",
+  "bottom-center": "Place the building rendering centered in the LOWER part.",
+  "bottom-right": "Place the building rendering toward the LOWER-RIGHT.",
+  "bottom-wide": "Place the building rendering as a wide panorama across the LOWER part.",
 };
 
 // gpt-image-1 지원 크기 중 목표 비율에 가장 가까운 것.
@@ -90,26 +48,15 @@ const RATIO_SIZE: Record<string, "1536x1024" | "1024x1536"> = {
 const NO_TEXT_CLAUSE =
   "ABSOLUTELY NO text of any kind: no words, no letters, no Korean characters, no English words, no gibberish text, no captions, no labels, no numbers, no dates. NO logos, NO watermarks, NO signatures, NO signage, NO UI elements, NO typography whatsoever. The image must be a pure clean background only.";
 
-function buildPrompt(o: {
-  colorTone: string;
-  mood: string;
-  density: string;
-  safeArea: string;
-  placement: string;
-  scale: string;
-  gradient: string;
-}): string {
+function buildPrompt(o: { colorTone: string; placement: string }): string {
   return [
-    "Create a clean, modern background for the COVER of a Korean real-estate proposal/report, in a polished corporate brochure style.",
-    "CRITICAL: keep the provided architectural rendering SHARP, crisp, photorealistic and highly detailed. Do NOT blur, fog, haze, soften, repaint, or turn it into an abstract/painterly image. Preserve its real structures and materials exactly.",
-    `Composition: ${PLACEMENTS[o.placement]} ${SCALES[o.scale]} Keep it sharp and sitting naturally on its ground/water line.`,
-    `Fill the remaining open space with a smooth clean gradient in ${COLOR_TONES[o.colorTone]}, as generous negative space. ${GRADIENTS[o.gradient]}`,
-    "Add refined, minimal corporate design accents: a few thin elegant curved arc/ribbon lines sweeping through one upper corner, a faint halftone dot pattern in one corner, and delicate flowing wave/mesh lines near a lower corner. Keep these decorations subtle, tasteful and clearly secondary to the building.",
-    `Overall mood: ${MOODS[o.mood]}.`,
-    `Composition density: ${DENSITIES[o.density]}.`,
-    SAFE_AREAS[o.safeArea],
+    "Design a beautiful, professional COVER background for a Korean real-estate proposal/report. It should look polished and tasteful, like the cover of a premium corporate report.",
+    "CRITICAL: keep the provided architectural rendering SHARP, crisp, photorealistic and highly detailed. Do NOT blur, fog, haze, soften, or repaint it. Preserve its real structures and materials exactly.",
+    `${PLACEMENTS[o.placement]} Let the building sit naturally on its ground/water line.`,
+    `Use a refined color scheme based on ${COLOR_TONES[o.colorTone]}.`,
+    "You have full creative freedom for the rest of the design: choose an elegant composition, smooth gradients, lighting, and any tasteful modern graphic accents (subtle lines, shapes, or patterns) that suit a high-end real-estate report cover. Keep it clean and uncluttered, and leave generous open space so a title can be added later.",
     NO_TEXT_CLAUSE,
-    "The result must look like a professionally designed report cover (like a corporate brochure), NOT a photo filter or a foggy dream. Usable as-is behind a title added later in PowerPoint.",
+    "The result should look like it was made by a professional graphic designer for a report cover — refined, not busy, and not a photo filter.",
   ].join(" ");
 }
 
@@ -142,14 +89,8 @@ export async function POST(req: Request) {
     const {
       imageBase64,
       colorTone,
-      mood,
-      density,
-      safeArea,
       ratio,
-      // 배치 조절 옵션(없으면 기본값).
       placement = "bottom-center",
-      scale = "medium",
-      gradient = "top-dark",
     } = body ?? {};
 
     // ── 입력 검증 ──
@@ -162,15 +103,7 @@ export async function POST(req: Request) {
         { status: 413 }
       );
     }
-    if (
-      !COLOR_TONES[colorTone] ||
-      !MOODS[mood] ||
-      !DENSITIES[density] ||
-      !SAFE_AREAS[safeArea] ||
-      !PLACEMENTS[placement] ||
-      !SCALES[scale] ||
-      !GRADIENTS[gradient]
-    ) {
+    if (!COLOR_TONES[colorTone] || !PLACEMENTS[placement]) {
       return Response.json({ error: "선택 옵션이 올바르지 않습니다." }, { status: 400 });
     }
     const size = RATIO_SIZE[ratio] ?? "1536x1024";
@@ -189,7 +122,7 @@ export async function POST(req: Request) {
     const res = await client.images.edit({
       model: "gpt-image-1",
       image: file,
-      prompt: buildPrompt({ colorTone, mood, density, safeArea, placement, scale, gradient }),
+      prompt: buildPrompt({ colorTone, placement }),
       size,
       quality: "medium",
       n: 1,
