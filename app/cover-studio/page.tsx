@@ -37,13 +37,16 @@ const GRADIENTS = [
   { key: "radial", label: "가운데 밝게" },
 ] as const;
 
-const SAFE_AREAS = [
-  { key: "left", label: "왼쪽" },
-  { key: "center", label: "가운데" },
-  { key: "right", label: "오른쪽" },
-  { key: "bottom", label: "아래" },
-  { key: "none", label: "없음" },
+// 장식 요소들 — 각각 독립적으로 켜고 끌 수 있다.
+const DECO_ELEMENTS = [
+  { key: "ribbons", label: "곡선 리본" },
+  { key: "dots", label: "하프톤 점" },
+  { key: "waves", label: "물결선" },
+  { key: "grid", label: "라인 그리드" },
+  { key: "rays", label: "대각 빛줄기" },
 ] as const;
+
+type DecoKey = (typeof DECO_ELEMENTS)[number]["key"];
 
 type State = {
   ratioKey: string;
@@ -53,8 +56,7 @@ type State = {
   posY: number; // 건물 세로 위치, 하단 기준 위로 올리는 정도 0~40
   size: number; // 건물 너비 비율 30~100
   feather: number; // 위/옆 가장자리 블렌딩 정도 0~60
-  deco: boolean; // 장식 표시
-  safe: string; // 안전영역 가이드(미리보기 전용)
+  deco: Record<DecoKey, boolean>; // 장식 요소별 on/off
 };
 
 export default function CoverStudio() {
@@ -71,11 +73,12 @@ export default function CoverStudio() {
     posY: 0,
     size: 70,
     feather: 30,
-    deco: true,
-    safe: "left",
+    deco: { ribbons: true, dots: true, waves: true, grid: false, rays: false },
   });
 
   const set = <K extends keyof State>(k: K, v: State[K]) => setS((p) => ({ ...p, [k]: v }));
+  const toggleDeco = (k: DecoKey) =>
+    setS((p) => ({ ...p, deco: { ...p.deco, [k]: !p.deco[k] } }));
 
   const ratio = RATIOS.find((r) => r.key === s.ratioKey) ?? RATIOS[0];
 
@@ -152,15 +155,15 @@ export default function CoverStudio() {
       }
     }
 
-    // 3) 장식 요소
-    if (s.deco) {
-      const lightTone = s.tone === "White";
-      const stroke = (a: number) =>
-        lightTone ? `rgba(40,80,150,${a})` : `rgba(255,255,255,${a})`;
-      const fill = (a: number) =>
-        lightTone ? `rgba(40,80,150,${a})` : `rgba(255,255,255,${a})`;
+    // 3) 장식 요소 (각각 독립적으로 on/off)
+    const lightTone = s.tone === "White";
+    const stroke = (a: number) =>
+      lightTone ? `rgba(40,80,150,${a})` : `rgba(255,255,255,${a})`;
+    const fill = (a: number) =>
+      lightTone ? `rgba(40,80,150,${a})` : `rgba(255,255,255,${a})`;
 
-      // 3a) 좌상단 곡선 리본
+    // 3a) 좌상단 곡선 리본
+    if (s.deco.ribbons) {
       ctx.save();
       ctx.lineWidth = Math.max(1, W / 900);
       for (let i = 0; i < 5; i++) {
@@ -172,8 +175,10 @@ export default function CoverStudio() {
         ctx.stroke();
       }
       ctx.restore();
+    }
 
-      // 3b) 우상단 하프톤 점
+    // 3b) 우상단 하프톤 점
+    if (s.deco.dots) {
       ctx.save();
       const cols = 16;
       const rows = 8;
@@ -191,8 +196,10 @@ export default function CoverStudio() {
         }
       }
       ctx.restore();
+    }
 
-      // 3c) 우하단 물결 메시선
+    // 3c) 우하단 물결 메시선
+    if (s.deco.waves) {
       ctx.save();
       ctx.lineWidth = Math.max(0.6, W / 1600);
       for (let i = 0; i < 14; i++) {
@@ -205,6 +212,45 @@ export default function CoverStudio() {
           ctx.lineTo(px, yy);
         }
         ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    // 3d) 은은한 라인 그리드 (전체)
+    if (s.deco.grid) {
+      ctx.save();
+      ctx.lineWidth = Math.max(0.5, W / 2200);
+      ctx.strokeStyle = stroke(0.06);
+      const step = W * 0.05;
+      for (let x = step; x < W; x += step) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, H);
+        ctx.stroke();
+      }
+      for (let y = step; y < H; y += step) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(W, y);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    // 3e) 대각 빛줄기
+    if (s.deco.rays) {
+      ctx.save();
+      for (let i = 0; i < 5; i++) {
+        const bw = W * (0.06 + i * 0.015);
+        const x0 = -W * 0.1 + i * (W * 0.14);
+        ctx.fillStyle = fill(0.05 - i * 0.006);
+        ctx.beginPath();
+        ctx.moveTo(x0, 0);
+        ctx.lineTo(x0 + bw, 0);
+        ctx.lineTo(x0 + bw + W * 0.35, H);
+        ctx.lineTo(x0 + W * 0.35, H);
+        ctx.closePath();
+        ctx.fill();
       }
       ctx.restore();
     }
@@ -240,18 +286,6 @@ export default function CoverStudio() {
     a.click();
   }
 
-  // 미리보기 안전영역 박스 (canvas 위 오버레이, 다운로드엔 미포함)
-  const safeBox: React.CSSProperties | null =
-    s.safe === "left"
-      ? { left: "3%", top: "8%", width: "38%", height: "84%" }
-      : s.safe === "center"
-      ? { left: "20%", top: "30%", width: "60%", height: "40%" }
-      : s.safe === "right"
-      ? { right: "3%", top: "8%", width: "38%", height: "84%" }
-      : s.safe === "bottom"
-      ? { left: "8%", bottom: "6%", width: "84%", height: "26%" }
-      : null;
-
   return (
     <div className="min-h-screen bg-zinc-50 font-sans text-zinc-900 antialiased">
       <main className="mx-auto w-full max-w-5xl px-5 py-8">
@@ -279,16 +313,6 @@ export default function CoverStudio() {
             />
             <div className="relative overflow-hidden rounded-lg border bg-white">
               <canvas ref={canvasRef} className="block w-full" />
-              {safeBox && (
-                <div
-                  className="pointer-events-none absolute rounded border-2 border-dashed border-white/80 mix-blend-difference"
-                  style={safeBox}
-                >
-                  <span className="absolute left-1 top-1 rounded bg-black/50 px-1 text-[10px] text-white">
-                    제목 영역
-                  </span>
-                </div>
-              )}
             </div>
             <button
               onClick={download}
@@ -326,14 +350,10 @@ export default function CoverStudio() {
             <Slider label={`건물 높이 올림 (${s.posY})`} min={0} max={40} value={s.posY} onChange={(v) => set("posY", v)} />
             <Slider label={`건물 크기 (${s.size})`} min={30} max={100} value={s.size} onChange={(v) => set("size", v)} />
             <Slider label={`가장자리 블렌딩 (${s.feather})`} min={0} max={60} value={s.feather} onChange={(v) => set("feather", v)} />
-            <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={s.deco} onChange={(e) => set("deco", e.target.checked)} />
-              장식(리본·점·물결) 표시
-            </label>
-            <Row label="제목 안전영역(미리보기)">
-              {SAFE_AREAS.map((a) => (
-                <Chip key={a.key} active={s.safe === a.key} onClick={() => set("safe", a.key)}>
-                  {a.label}
+            <Row label="장식 요소 (자유 조합)">
+              {DECO_ELEMENTS.map((d) => (
+                <Chip key={d.key} active={s.deco[d.key]} onClick={() => toggleDeco(d.key)}>
+                  {d.label}
                 </Chip>
               ))}
             </Row>
