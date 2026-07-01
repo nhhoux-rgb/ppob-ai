@@ -134,6 +134,12 @@ export async function POST(req: Request) {
     return Response.json({ imageBase64: `data:image/png;base64,${b64}` });
   } catch (error) {
     console.error(error);
-    return Response.json({ error: "생성 중 오류가 발생했습니다." }, { status: 500 });
+    // 디버그용: 실제 오류 메시지를 노출한다(테스트 랩 한정).
+    const msg =
+      error instanceof Error ? error.message : typeof error === "string" ? error : "unknown";
+    return Response.json(
+      { error: `생성 오류: ${String(msg).slice(0, 300)}` },
+      { status: 500 }
+    );
   }
 }
