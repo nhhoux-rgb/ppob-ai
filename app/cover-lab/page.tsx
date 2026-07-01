@@ -12,7 +12,7 @@ const RATIOS = [
   { key: "a4-portrait", label: "A4 세로" },
 ] as const;
 
-const COLOR_TONES = ["Navy", "Blue", "Black", "White", "Gold", "Green", "Gray"] as const;
+const COLOR_TONES = ["White", "Navy", "Blue", "Black", "Gold", "Green", "Gray"] as const;
 
 const PLACEMENTS = [
   { key: "bottom-left", label: "왼쪽 아래" },
@@ -33,7 +33,7 @@ export default function CoverLab() {
   const [error, setError] = useState("");
 
   const [ratio, setRatio] = useState<string>("a4-landscape");
-  const [colorTone, setColorTone] = useState<string>("Navy");
+  const [colorTone, setColorTone] = useState<string>("White");
   const [placement, setPlacement] = useState<string>("bottom-center");
   const [quality, setQuality] = useState<string>("high");
 

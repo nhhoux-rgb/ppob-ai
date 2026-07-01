@@ -24,7 +24,7 @@ const COLOR_TONES: Record<string, string> = {
   Navy: "deep navy blue tones, dark professional blues",
   Blue: "clean corporate blue tones, sky-to-azure gradients",
   Black: "rich near-black tones with subtle charcoal gradients",
-  White: "bright airy white and light gray tones, high-key",
+  White: "a predominantly CLEAN WHITE background (bright, airy, high-key) with only subtle light-gray and soft pale-blue accents; keep most of the frame white with generous white space",
   Gold: "elegant champagne gold and warm bronze accents over dark base",
   Green: "sophisticated deep emerald and forest green tones",
   Gray: "neutral graphite and silver-gray tones",
