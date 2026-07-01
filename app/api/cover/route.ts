@@ -50,13 +50,14 @@ const NO_TEXT_CLAUSE =
 
 function buildPrompt(o: { colorTone: string; placement: string }): string {
   return [
-    "Design a beautiful, professional COVER background for a Korean real-estate proposal/report. It should look polished and tasteful, like the cover of a premium corporate report.",
-    "CRITICAL: keep the provided architectural rendering SHARP, crisp, photorealistic and highly detailed. Do NOT blur, fog, haze, soften, or repaint it. Preserve its real structures and materials exactly.",
-    `${PLACEMENTS[o.placement]} Let the building sit naturally on its ground/water line.`,
-    `Use a refined color scheme based on ${COLOR_TONES[o.colorTone]}.`,
-    "You have full creative freedom for the rest of the design: choose an elegant composition, smooth gradients, lighting, and any tasteful modern graphic accents (subtle lines, shapes, or patterns) that suit a high-end real-estate report cover. Keep it clean and uncluttered, and leave generous open space so a title can be added later.",
+    "Design a COMPLETE, fully finished COVER background for a premium Korean real-estate proposal/report — magazine/brochure-cover quality, intentionally composed edge to edge.",
+    "CRITICAL: keep the provided architectural rendering SHARP, crisp, photorealistic and highly detailed; preserve its real structures and materials. Do NOT blur, fog, soften, or repaint it.",
+    "IMPORTANT: remove any signage, banners, billboards, screens or text that appear on or around the buildings — all surfaces must be clean and blank.",
+    `${PLACEMENTS[o.placement]} Integrate the building naturally into the scene, grounded on its base/ground line — it must NOT look like a small cut-out floating in empty space.`,
+    `Refined color scheme based on ${COLOR_TONES[o.colorTone]}.`,
+    "Fully design the rest of the frame like a professional graphic designer would: rich layered gradients, soft depth and lighting/glow, and tasteful modern graphic accents (flowing lines, subtle geometric patterns, delicate light particles). Do NOT leave large flat empty dead areas — the whole cover should feel deliberately designed — while still keeping one calmer, uncluttered region with open space for a title to be added later.",
     NO_TEXT_CLAUSE,
-    "The result should look like it was made by a professional graphic designer for a report cover — refined, not busy, and not a photo filter.",
+    "The result must look like a polished, premium report cover made by a professional designer — not a plain recolor and not a photo filter.",
   ].join(" ");
 }
 
@@ -91,7 +92,10 @@ export async function POST(req: Request) {
       colorTone,
       ratio,
       placement = "bottom-center",
+      quality = "high",
     } = body ?? {};
+    const QUALITIES = ["low", "medium", "high"] as const;
+    const q = (QUALITIES as readonly string[]).includes(quality) ? quality : "high";
 
     // ── 입력 검증 ──
     if (!imageBase64 || typeof imageBase64 !== "string" || !imageBase64.startsWith("data:image/")) {
@@ -124,7 +128,7 @@ export async function POST(req: Request) {
       image: file,
       prompt: buildPrompt({ colorTone, placement }),
       size,
-      quality: "medium",
+      quality: q,
       n: 1,
     });
 

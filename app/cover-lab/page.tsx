@@ -21,6 +21,11 @@ const PLACEMENTS = [
   { key: "bottom-wide", label: "하단 전체(파노라마)" },
 ] as const;
 
+const QUALITIES = [
+  { key: "high", label: "고품질(권장)" },
+  { key: "medium", label: "보통(빠름·저렴)" },
+] as const;
+
 export default function CoverLab() {
   const [image, setImage] = useState("");
   const [result, setResult] = useState("");
@@ -30,6 +35,7 @@ export default function CoverLab() {
   const [ratio, setRatio] = useState<string>("a4-landscape");
   const [colorTone, setColorTone] = useState<string>("Navy");
   const [placement, setPlacement] = useState<string>("bottom-center");
+  const [quality, setQuality] = useState<string>("high");
 
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -55,7 +61,7 @@ export default function CoverLab() {
       const res = await fetch("/api/cover", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageBase64: image, colorTone, ratio, placement }),
+        body: JSON.stringify({ imageBase64: image, colorTone, ratio, placement, quality }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "생성 실패");
@@ -116,6 +122,13 @@ export default function CoverLab() {
             {PLACEMENTS.map((p) => (
               <Chip key={p.key} active={placement === p.key} onClick={() => setPlacement(p.key)}>
                 {p.label}
+              </Chip>
+            ))}
+          </OptionRow>
+          <OptionRow label="품질">
+            {QUALITIES.map((qq) => (
+              <Chip key={qq.key} active={quality === qq.key} onClick={() => setQuality(qq.key)}>
+                {qq.label}
               </Chip>
             ))}
           </OptionRow>
