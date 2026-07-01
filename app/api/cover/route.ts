@@ -19,26 +19,7 @@ function isRateLimited(ip: string): boolean {
   return recent.length > RATE_LIMIT;
 }
 
-// ── 옵션 어휘 → 프롬프트 (spike의 prompts.mjs와 동일 개념) ─────────
-const COLOR_TONES: Record<string, string> = {
-  Navy: "deep navy blue tones, dark professional blues",
-  Blue: "clean corporate blue tones, sky-to-azure gradients",
-  Black: "rich near-black tones with subtle charcoal gradients",
-  White: "a predominantly CLEAN WHITE background (bright, airy, high-key) with only subtle light-gray and soft pale-blue accents; keep most of the frame white with generous white space",
-  Gold: "elegant champagne gold and warm bronze accents over dark base",
-  Green: "sophisticated deep emerald and forest green tones",
-  Gray: "neutral graphite and silver-gray tones",
-};
-
-// 건물 배치 위치 (사용자가 고르는 유일한 구도 옵션).
-const PLACEMENTS: Record<string, string> = {
-  "bottom-left": "Place the building rendering toward the LOWER-LEFT.",
-  "bottom-center": "Place the building rendering centered in the LOWER part.",
-  "bottom-right": "Place the building rendering toward the LOWER-RIGHT.",
-  "bottom-wide": "Place the building rendering as a wide panorama across the LOWER part.",
-};
-
-// gpt-image-1 지원 크기 중 목표 비율에 가장 가까운 것.
+// gpt-image 지원 크기 중 목표 비율에 가장 가까운 것.
 const RATIO_SIZE: Record<string, "1536x1024" | "1024x1536"> = {
   "a4-landscape": "1536x1024",
   "16:9": "1536x1024",
@@ -48,17 +29,29 @@ const RATIO_SIZE: Record<string, "1536x1024" | "1024x1536"> = {
 const NO_TEXT_CLAUSE =
   "ABSOLUTELY NO text of any kind: no words, no letters, no Korean characters, no English words, no gibberish text, no captions, no labels, no numbers, no dates. NO logos, NO watermarks, NO signatures, NO signage, NO UI elements, NO typography whatsoever. The image must be a pure clean background only.";
 
-function buildPrompt(o: { colorTone: string; placement: string }): string {
-  return [
+const MAX_USER_PROMPT = 600;
+
+// 사용자는 사진만 넣으면 되고, 원하면 자유 텍스트로 느낌을 지시한다.
+// 고정 제약(선명·무텍스트·표지용)은 항상 유지하고, 사용자 문구는 추가 지시로 덧붙인다.
+function buildPrompt(userPrompt: string): string {
+  const base = [
     "Create a premium, photorealistic COVER background for a Korean real-estate proposal/report — a full-bleed, cinematic architectural scene like the cover of a high-end brochure.",
     "CRITICAL: keep the provided architectural rendering SHARP, crisp, photorealistic and highly detailed; preserve its real structures and materials. Do NOT blur, soften, or repaint it.",
     "IMPORTANT: remove any signage, banners, billboards, screens or text on or around the buildings — all surfaces must be clean and blank.",
-    `${PLACEMENTS[o.placement]} Let the scene fill the frame naturally with real depth and professional lighting — it must NOT look like a small cut-out floating in empty space.`,
-    `Refined color scheme based on ${COLOR_TONES[o.colorTone]}.`,
-    "Design it like a professional graphic designer: elegant cinematic composition, smooth gradients and lighting, and a clean, calmer tinted panel area (for example a soft diagonal or side panel) kept as open negative space so a title can be added later. Fully composed edge to edge, polished and uncluttered — not a plain recolor.",
-    NO_TEXT_CLAUSE,
-    "The result must look exactly like a finished premium real-estate report cover — just completely without any text, letters, or logos.",
-  ].join(" ");
+    "Fill the frame naturally with real depth and professional lighting — it must NOT look like a small cut-out floating in empty space.",
+    "Design it like a professional graphic designer: elegant cinematic composition, smooth gradients and lighting, and a clean, calmer area kept as open negative space so a title can be added later. Fully composed edge to edge, polished and uncluttered — not a plain recolor.",
+    "By default use a clean, bright, refined professional color scheme, unless the user's request below asks for something different.",
+  ];
+  if (userPrompt) {
+    base.push(
+      `User's requested look/feel (follow it, but never add any text, letters or logos): ${userPrompt}`
+    );
+  }
+  base.push(NO_TEXT_CLAUSE);
+  base.push(
+    "The result must look exactly like a finished premium real-estate report cover — just completely without any text, letters, or logos."
+  );
+  return base.join(" ");
 }
 
 export async function POST(req: Request) {
@@ -87,15 +80,11 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const {
-      imageBase64,
-      colorTone,
-      ratio,
-      placement = "bottom-center",
-      quality = "high",
-    } = body ?? {};
+    const { imageBase64, ratio, quality = "high", userPrompt } = body ?? {};
     const QUALITIES = ["low", "medium", "high"] as const;
     const q = (QUALITIES as readonly string[]).includes(quality) ? quality : "high";
+    const cleanPrompt =
+      typeof userPrompt === "string" ? userPrompt.trim().slice(0, MAX_USER_PROMPT) : "";
 
     // ── 입력 검증 ──
     if (!imageBase64 || typeof imageBase64 !== "string" || !imageBase64.startsWith("data:image/")) {
@@ -106,9 +95,6 @@ export async function POST(req: Request) {
         { error: "이미지 용량이 너무 큽니다. 더 작은 사진을 사용해 주세요." },
         { status: 413 }
       );
-    }
-    if (!COLOR_TONES[colorTone] || !PLACEMENTS[placement]) {
-      return Response.json({ error: "선택 옵션이 올바르지 않습니다." }, { status: 400 });
     }
     const size = RATIO_SIZE[ratio] ?? "1536x1024";
 
@@ -126,7 +112,7 @@ export async function POST(req: Request) {
     const res = await client.images.edit({
       model: "gpt-image-1.5",
       image: file,
-      prompt: buildPrompt({ colorTone, placement }),
+      prompt: buildPrompt(cleanPrompt),
       size,
       quality: q,
       n: 1,
