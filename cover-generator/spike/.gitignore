@@ -1,0 +1,7 @@
+node_modules/
+out/
+# 테스트용 조감도 원본은 커밋하지 않는다
+*.jpg
+*.jpeg
+*.png
+*.webp
