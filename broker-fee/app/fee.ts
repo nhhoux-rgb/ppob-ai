@@ -6,6 +6,8 @@
 
 export type DealType = "sale" | "jeonse" | "wolse";
 export type HouseType = "house" | "officetel";
+// 중개사무소 과세 유형에 따른 부가세.
+export type VatType = "none" | "general" | "simple";
 
 type Bracket = {
   // 이 구간의 상한 금액(원, "미만" 기준). Infinity면 그 이상 전부.
@@ -39,6 +41,13 @@ const RENT_HOUSE: Bracket[] = [
 const OFFICETEL_SALE_RATE = 0.005;
 const OFFICETEL_RENT_RATE = 0.004;
 
+// 부가세율. 간이과세자는 업종 부가가치율(중개업 40%)을 반영한 실질 4%로 안내.
+export const VAT_RATE: Record<VatType, number> = {
+  none: 0,
+  general: 0.1,
+  simple: 0.04,
+};
+
 /**
  * 월세 거래금액 환산.
  * 거래금액 = 보증금 + (월세 × 100).
@@ -61,8 +70,6 @@ export type FeeResult = {
   capped: boolean;
   // 부가세 제외 상한 중개보수(원)
   fee: number;
-  // 부가세(10%) 포함 예상액(원) — 일반과세 중개사무소 기준
-  feeWithVat: number;
 };
 
 export function calcFee(
@@ -77,7 +84,8 @@ export function calcFee(
     rate = dealType === "sale" ? OFFICETEL_SALE_RATE : OFFICETEL_RENT_RATE;
   } else {
     const table = dealType === "sale" ? SALE_HOUSE : RENT_HOUSE;
-    const bracket = table.find((b) => baseAmount < b.upTo) ?? table[table.length - 1]!;
+    const bracket =
+      table.find((b) => baseAmount < b.upTo) ?? table[table.length - 1]!;
     rate = bracket.rate;
     cap = bracket.cap;
   }
@@ -86,12 +94,26 @@ export function calcFee(
   const capped = cap !== null && raw > cap;
   const fee = capped ? cap! : raw;
 
-  return {
-    baseAmount,
-    rate,
-    cap,
-    capped,
-    fee,
-    feeWithVat: Math.floor(fee * 1.1),
-  };
+  return { baseAmount, rate, cap, capped, fee };
 }
+
+// ── 화면 표시용 요율표 (과세기준표) ─────────────────────────────
+export type RateRow = { range: string; rate: string; cap: string };
+
+export const SALE_HOUSE_TABLE: RateRow[] = [
+  { range: "5천만원 미만", rate: "0.6%", cap: "25만원" },
+  { range: "5천만원 ~ 2억원 미만", rate: "0.5%", cap: "80만원" },
+  { range: "2억원 ~ 9억원 미만", rate: "0.4%", cap: "없음" },
+  { range: "9억원 ~ 12억원 미만", rate: "0.5%", cap: "없음" },
+  { range: "12억원 ~ 15억원 미만", rate: "0.6%", cap: "없음" },
+  { range: "15억원 이상", rate: "0.7%", cap: "없음" },
+];
+
+export const RENT_HOUSE_TABLE: RateRow[] = [
+  { range: "5천만원 미만", rate: "0.5%", cap: "20만원" },
+  { range: "5천만원 ~ 1억원 미만", rate: "0.4%", cap: "30만원" },
+  { range: "1억원 ~ 6억원 미만", rate: "0.3%", cap: "없음" },
+  { range: "6억원 ~ 12억원 미만", rate: "0.4%", cap: "없음" },
+  { range: "12억원 ~ 15억원 미만", rate: "0.5%", cap: "없음" },
+  { range: "15억원 이상", rate: "0.6%", cap: "없음" },
+];

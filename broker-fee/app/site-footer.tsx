@@ -1,8 +1,10 @@
 import Link from "next/link";
+import SharePageButton from "./share-page-button";
 
 const LINKS = [
   { href: "/", label: "홈" },
   { href: "/guide", label: "복비 가이드" },
+  { href: "/how-to-use", label: "이용 방법" },
   { href: "/faq", label: "자주 묻는 질문" },
   { href: "/privacy", label: "개인정보처리방침" },
 ];
@@ -10,6 +12,9 @@ const LINKS = [
 export default function SiteFooter() {
   return (
     <div>
+      <div className="mt-4 flex justify-center">
+        <SharePageButton />
+      </div>
       <nav className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
         {LINKS.map((l) => (
           <Link
