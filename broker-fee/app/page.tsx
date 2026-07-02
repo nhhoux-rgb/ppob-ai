@@ -25,6 +25,7 @@ const DEAL_TABS: { key: DealType; label: string }[] = [
 const HOUSE_TABS: { key: HouseType; label: string }[] = [
   { key: "house", label: "주택" },
   { key: "officetel", label: "오피스텔" },
+  { key: "commercial", label: "상가·사무실" },
 ];
 
 const VAT_TABS: { key: VatType; label: string }[] = [
@@ -145,13 +146,13 @@ export default function Home() {
         ))}
       </div>
 
-      {/* 주택 / 오피스텔 */}
-      <div className="mt-3 grid grid-cols-2 gap-1.5 rounded-2xl bg-zinc-100 p-1.5">
+      {/* 주택 / 오피스텔 / 상가 */}
+      <div className="mt-3 grid grid-cols-3 gap-1.5 rounded-2xl bg-zinc-100 p-1.5">
         {HOUSE_TABS.map((t) => (
           <button
             key={t.key}
             onClick={() => setHouse(t.key)}
-            className={`rounded-xl py-2 text-sm font-semibold transition ${
+            className={`rounded-xl py-2 text-xs font-semibold transition ${
               house === t.key
                 ? "bg-white text-emerald-600 shadow-sm"
                 : "text-zinc-500 hover:text-zinc-700"
@@ -167,6 +168,15 @@ export default function Home() {
           전용면적 85㎡ 이하이면서 전용 입식부엌·욕실 등 주거용 요건을 갖춘
           오피스텔 기준입니다. 요건을 벗어나면 상가와 같은 협의 요율(0.9% 이내)이
           적용될 수 있습니다.
+        </p>
+      )}
+
+      {house === "commercial" && (
+        <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-700">
+          상가·사무실 등 주택 외 부동산은 매매·임대차 구분 없이{" "}
+          <strong>0.9% 이내에서 협의</strong>로 정합니다(한도액 없음). 아래는
+          법정 상한(0.9%) 기준이며, 부가세는 대개 별도이고 권리금은 중개보수
+          산정에서 제외됩니다.
         </p>
       )}
 
@@ -288,6 +298,11 @@ export default function Home() {
           <p className="mt-1">
             주거용 요건 충족 시 — 매매·교환 0.5%, 임대차 0.4% (한도액 없음). 그
             외 용도는 0.9% 이내에서 협의.
+          </p>
+          <p className="mt-2 font-semibold text-zinc-700">상가·사무실 등</p>
+          <p className="mt-1">
+            주택 외 부동산은 매매·임대차 모두 0.9% 이내에서 협의 (구간·한도액
+            없음). 부가세 별도, 권리금은 산정 제외.
           </p>
           <p className="mt-2 font-semibold text-zinc-700">월세 거래금액 환산</p>
           <p className="mt-1">

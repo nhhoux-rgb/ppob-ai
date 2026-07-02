@@ -5,7 +5,7 @@
 // 여기 값은 "상한요율"이며 실제 보수는 상한 안에서 협의로 정한다.
 
 export type DealType = "sale" | "jeonse" | "wolse";
-export type HouseType = "house" | "officetel";
+export type HouseType = "house" | "officetel" | "commercial";
 // 중개사무소 과세 유형에 따른 부가세.
 export type VatType = "none" | "general" | "simple";
 
@@ -40,6 +40,10 @@ const RENT_HOUSE: Bracket[] = [
 // 오피스텔(85㎡ 이하·전용 입식부엌 등 주거 요건 충족) — 구간 없이 단일 요율, 한도액 없음.
 const OFFICETEL_SALE_RATE = 0.005;
 const OFFICETEL_RENT_RATE = 0.004;
+
+// 상가·사무실 등 '그 밖의 중개대상물' — 매매·임대차 구분 없이 0.9% 이내에서 협의.
+// 여기서는 법정 상한선(0.9%)을 기준으로 계산한다. 한도액·구간 없음.
+const COMMERCIAL_RATE = 0.009;
 
 // 부가세율. 간이과세자는 업종 부가가치율(중개업 40%)을 반영한 실질 4%로 안내.
 export const VAT_RATE: Record<VatType, number> = {
@@ -80,7 +84,10 @@ export function calcFee(
   let rate: number;
   let cap: number | null = null;
 
-  if (houseType === "officetel") {
+  if (houseType === "commercial") {
+    rate = COMMERCIAL_RATE;
+    cap = null;
+  } else if (houseType === "officetel") {
     rate = dealType === "sale" ? OFFICETEL_SALE_RATE : OFFICETEL_RENT_RATE;
   } else {
     const table = dealType === "sale" ? SALE_HOUSE : RENT_HOUSE;
