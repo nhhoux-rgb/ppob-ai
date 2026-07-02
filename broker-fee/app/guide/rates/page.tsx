@@ -7,6 +7,7 @@ export const metadata: Metadata = {
   title: "2026 부동산 중개보수 요율표 총정리 · 복비 계산기",
   description:
     "매매·전세·월세 부동산 중개수수료(복비) 상한요율표를 한눈에. 거래금액 구간별 요율과 한도액, 오피스텔 요율, 월세 환산법까지 정리했습니다.",
+  alternates: { canonical: "/guide/rates" },
 };
 
 function Table({ title, rows }: { title: string; rows: RateRow[] }) {

@@ -9,6 +9,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: "/guide/rates", priority: 0.8 },
     { path: "/guide/who-pays", priority: 0.8 },
     { path: "/guide/officetel", priority: 0.8 },
+    { path: "/guide/commercial", priority: 0.8 },
     { path: "/how-to-use", priority: 0.6 },
     { path: "/faq", priority: 0.6 },
     { path: "/privacy", priority: 0.3 },

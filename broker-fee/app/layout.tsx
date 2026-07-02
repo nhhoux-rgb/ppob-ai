@@ -2,7 +2,22 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { siteUrl } from "./site-url";
+import JsonLd from "./json-ld";
 import "./globals.css";
+
+// 검색엔진용 구조화 데이터 — 이 사이트가 "무료 부동산 중개보수 계산기"임을 명시.
+const APP_JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  name: "복비 계산기",
+  url: siteUrl,
+  applicationCategory: "FinanceApplication",
+  operatingSystem: "All",
+  inLanguage: "ko-KR",
+  description:
+    "매매·전세·월세·상가 부동산 중개보수(복비)를 법정 상한요율로 계산하는 무료 웹 계산기.",
+  offers: { "@type": "Offer", price: "0", priceCurrency: "KRW" },
+};
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -18,8 +33,9 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: "복비 계산기 · 부동산 중개수수료 계산",
   description:
-    "매매·전세·월세 중개보수(복비)를 법정 상한요율로 즉시 계산합니다. 주택·오피스텔 모두 지원, 부가세 포함 예상 금액까지 한 번에.",
+    "매매·전세·월세·상가 중개보수(복비)를 법정 상한요율로 즉시 계산합니다. 주택·오피스텔·상가 모두 지원, 부가세 포함 예상 금액까지 한 번에.",
   applicationName: "복비 계산기",
+  alternates: { canonical: "/" },
   keywords: [
     "복비 계산기",
     "부동산 중개수수료",
@@ -28,6 +44,8 @@ export const metadata: Metadata = {
     "전세 복비",
     "매매 중개수수료",
     "월세 복비 계산",
+    "상가 중개수수료",
+    "오피스텔 복비",
   ],
   openGraph: {
     type: "website",
@@ -62,6 +80,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <JsonLd data={APP_JSON_LD} />
         {children}
         <Analytics />
         {/* AdSense loader — plain script tag so it renders literally in the

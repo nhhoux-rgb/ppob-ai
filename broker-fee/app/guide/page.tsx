@@ -6,6 +6,7 @@ export const metadata: Metadata = {
   title: "부동산 복비(중개수수료) 완전 가이드 · 복비 계산기",
   description:
     "복비(부동산 중개보수)란 무엇이고 어떻게 계산되는지, 상한요율표·부가세·누가 내는지까지. 매매·전세·월세 중개수수료의 기본을 쉽게 정리했습니다.",
+  alternates: { canonical: "/guide" },
 };
 
 export default function GuidePage() {
@@ -120,6 +121,14 @@ export default function GuidePage() {
                 className="text-sm font-semibold text-emerald-600 underline underline-offset-2"
               >
                 오피스텔 복비는 왜 다를까 — 주거용 요건과 요율
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/guide/commercial"
+                className="text-sm font-semibold text-emerald-600 underline underline-offset-2"
+              >
+                상가·사무실 중개수수료(복비) 완전정리
               </Link>
             </li>
           </ul>

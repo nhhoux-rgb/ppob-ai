@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import SiteFooter from "../site-footer";
+import JsonLd from "../json-ld";
 
 export const metadata: Metadata = {
   title: "자주 묻는 질문 · 복비 계산기",
   description:
     "복비 계산기 이용과 부동산 중개수수료에 대해 자주 묻는 질문을 모았습니다. 무료 여부, 계산 기준, 부가세, 상한요율 신뢰도 등을 안내합니다.",
+  alternates: { canonical: "/faq" },
 };
 
 const FAQ = [
@@ -33,11 +35,27 @@ const FAQ = [
     q: "오피스텔도 계산되나요?",
     a: "네. '오피스텔'을 선택하면 주거용 오피스텔 전용 요율(매매 0.5%, 임대차 0.4%)로 계산합니다. 다만 면적·설비 요건을 벗어나면 0.9% 이내 협의 요율이 적용될 수 있습니다.",
   },
+  {
+    q: "상가·사무실 복비도 계산되나요?",
+    a: "네. '상가·사무실'을 선택하면 주택 외 부동산 요율로 계산합니다. 상가·사무실 등은 매매·임대차 구분 없이 거래금액의 0.9% 이내에서 협의로 정하며 구간·한도액이 없습니다. 부가세는 대개 별도이고, 권리금은 중개보수 산정에서 제외됩니다.",
+  },
 ];
+
+// FAQPage 구조화 데이터 — 구글 검색결과에 FAQ가 펼쳐질 수 있게 한다.
+const FAQ_JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: FAQ.map((item) => ({
+    "@type": "Question",
+    name: item.q,
+    acceptedAnswer: { "@type": "Answer", text: item.a },
+  })),
+};
 
 export default function FaqPage() {
   return (
     <div className="min-h-screen bg-white font-sans text-zinc-900 antialiased">
+      <JsonLd data={FAQ_JSON_LD} />
       <main className="mx-auto w-full max-w-[640px] px-5 py-10 sm:px-6">
         <Link
           href="/"

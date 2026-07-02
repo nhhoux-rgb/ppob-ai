@@ -6,6 +6,7 @@ export const metadata: Metadata = {
   title: "오피스텔 복비는 왜 다를까 — 주거용 요건과 요율 · 복비 계산기",
   description:
     "오피스텔 중개보수는 주택과 요율이 다릅니다. 주거용 오피스텔 요건, 매매 0.5%·임대차 0.4% 요율, 상가 취급되는 경우까지 정리했습니다.",
+  alternates: { canonical: "/guide/officetel" },
 };
 
 export default function OfficetelGuidePage() {
