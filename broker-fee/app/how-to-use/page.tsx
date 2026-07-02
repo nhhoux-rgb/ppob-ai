@@ -6,6 +6,7 @@ export const metadata: Metadata = {
   title: "이용 방법 · 복비 계산기",
   description:
     "복비 계산기 사용법을 단계별로 안내합니다. 거래 유형과 부동산 종류를 고르고 금액을 넣으면 중개보수 상한이 바로 계산됩니다.",
+  alternates: { canonical: "/how-to-use" },
 };
 
 const STEPS = [

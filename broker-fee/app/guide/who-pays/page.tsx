@@ -6,6 +6,7 @@ export const metadata: Metadata = {
   title: "복비는 누가, 언제 내나요? · 복비 계산기",
   description:
     "부동산 중개보수는 매수인·매도인, 임대인·임차인 중 누가 내는지, 언제 지급하는지, 계약이 깨지면 어떻게 되는지 정리했습니다.",
+  alternates: { canonical: "/guide/who-pays" },
 };
 
 const QA = [
