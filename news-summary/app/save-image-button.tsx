@@ -6,9 +6,11 @@ import { toPng } from "html-to-image";
 export default function SaveImageButton({
   targetRef,
   filename = "기사요약",
+  backgroundColor = "#ffffff",
 }: {
   targetRef: RefObject<HTMLElement | null>;
   filename?: string;
+  backgroundColor?: string;
 }) {
   const [saving, setSaving] = useState(false);
   const [done, setDone] = useState(false);
@@ -22,7 +24,7 @@ export default function SaveImageButton({
       // 요약 카드 DOM을 그대로 PNG로 렌더링 (3배 해상도 → 보고서 인쇄에도 선명)
       const dataUrl = await toPng(node, {
         pixelRatio: 3,
-        backgroundColor: "#ffffff",
+        backgroundColor,
         cacheBust: true,
       });
 
