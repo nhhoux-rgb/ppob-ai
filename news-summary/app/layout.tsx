@@ -1,5 +1,11 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import {
+  Geist,
+  Geist_Mono,
+  Noto_Sans_KR,
+  Noto_Serif_KR,
+  Jua,
+} from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { siteUrl } from "./site-url";
 import "./globals.css";
@@ -12,6 +18,29 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+});
+
+// 요약 카드의 폰트 선택지. next/font로 self-host(같은 도메인)라
+// html-to-image가 다운로드 이미지에도 확실히 임베드할 수 있다.
+const notoSansKr = Noto_Sans_KR({
+  weight: ["400", "700", "900"],
+  subsets: ["latin"],
+  preload: false,
+  variable: "--font-card-sans",
+});
+
+const notoSerifKr = Noto_Serif_KR({
+  weight: ["400", "700", "900"],
+  subsets: ["latin"],
+  preload: false,
+  variable: "--font-card-serif",
+});
+
+const jua = Jua({
+  weight: "400",
+  subsets: ["latin"],
+  preload: false,
+  variable: "--font-card-round",
 });
 
 export const metadata: Metadata = {
@@ -58,7 +87,7 @@ export default function RootLayout({
   return (
     <html
       lang="ko"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${notoSansKr.variable} ${notoSerifKr.variable} ${jua.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         {children}

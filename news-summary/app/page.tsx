@@ -1,13 +1,44 @@
 "use client";
 
-import { useMemo, useRef, useState, type ChangeEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import SiteFooter from "./site-footer";
 import VisitorCount from "./visitor-count";
 import SharePageButton from "./share-page-button";
 import SaveImageButton from "./save-image-button";
-import SummaryCard, { type Clip } from "./summary-card";
+import SummaryCard, {
+  DEFAULT_DESIGN,
+  type Clip,
+  type Design,
+  type FontKey,
+  type TextureKey,
+} from "./summary-card";
 
 type Mode = "url" | "paste";
+
+const DESIGN_STORE_KEY = "design:v1";
+
+// 디자인 프리셋: 배경·글자·질감을 한 번에 세팅
+const THEME_PRESETS: { name: string; design: Omit<Design, "font"> }[] = [
+  { name: "화이트", design: { bg: "#ffffff", text: "#111827", texture: "none" } },
+  { name: "아이보리", design: { bg: "#faf7f0", text: "#3f3a2f", texture: "paper" } },
+  { name: "뉴스페이퍼", design: { bg: "#f5f4f1", text: "#1a1a1a", texture: "grid" } },
+  { name: "다크", design: { bg: "#0f172a", text: "#f1f5f9", texture: "gradient" } },
+  { name: "네이비", design: { bg: "#111c33", text: "#e8eefc", texture: "gradient" } },
+];
+
+const BG_SWATCHES = ["#ffffff", "#faf7f0", "#f4f5f7", "#eef2f7", "#1c1917", "#0f172a", "#111c33"];
+const TEXT_SWATCHES = ["#111827", "#374151", "#1e3a8a", "#7f1d1d", "#065f46", "#f1f5f9", "#ffffff"];
+const FONTS: { key: FontKey; label: string }[] = [
+  { key: "sans", label: "고딕" },
+  { key: "serif", label: "명조" },
+  { key: "round", label: "부드러움" },
+];
+const TEXTURES: { key: TextureKey; label: string }[] = [
+  { key: "none", label: "없음" },
+  { key: "paper", label: "종이" },
+  { key: "grid", label: "그리드" },
+  { key: "gradient", label: "그라데이션" },
+];
 
 // 로고 기억 키: 도메인이 있으면 도메인 기준, 없으면 언론사명 기준
 function logoKey(domain: string, press: string): string {
@@ -51,9 +82,34 @@ export default function Home() {
   const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
   const [domain, setDomain] = useState("");
   const [remember, setRemember] = useState(true);
+  const [design, setDesign] = useState<Design>(DEFAULT_DESIGN);
 
   const logoInputRef = useRef<HTMLInputElement>(null);
   const cardRef = useRef<HTMLElement>(null);
+
+  // 디자인 설정은 브라우저에 기억해 다음에도 같은 스타일로
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(DESIGN_STORE_KEY);
+      // 저장소 값으로 1회 하이드레이트 (SSR 불일치 방지를 위해 마운트 후 반영)
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      if (saved) setDesign({ ...DEFAULT_DESIGN, ...JSON.parse(saved) });
+    } catch {
+      // 무시
+    }
+  }, []);
+
+  function updateDesign(patch: Partial<Design>) {
+    setDesign((d) => {
+      const next = { ...d, ...patch };
+      try {
+        localStorage.setItem(DESIGN_STORE_KEY, JSON.stringify(next));
+      } catch {
+        // 무시
+      }
+      return next;
+    });
+  }
 
   function update<K extends keyof Clip>(key: K, value: Clip[K]) {
     setClip((c) => (c ? { ...c, [key]: value } : c));
@@ -262,10 +318,22 @@ export default function Home() {
               미리보기
             </div>
             <div className="mb-5 overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
-              <SummaryCard ref={cardRef} clip={clip} logoDataUrl={logoDataUrl} />
+              <SummaryCard
+                ref={cardRef}
+                clip={clip}
+                logoDataUrl={logoDataUrl}
+                design={design}
+              />
             </div>
 
-            <SaveImageButton targetRef={cardRef} filename={filename} />
+            <SaveImageButton
+              targetRef={cardRef}
+              filename={filename}
+              backgroundColor={design.bg}
+            />
+
+            {/* 디자인 설정 */}
+            <DesignControls design={design} onChange={updateDesign} />
 
             {/* 로고 설정 */}
             <section className="mt-5 rounded-2xl border border-zinc-100 bg-white p-4 shadow-sm">
@@ -480,6 +548,180 @@ function ListEditor({
   );
 }
 
+function DesignControls({
+  design,
+  onChange,
+}: {
+  design: Design;
+  onChange: (patch: Partial<Design>) => void;
+}) {
+  return (
+    <section className="mt-4 rounded-2xl border border-zinc-100 bg-white p-4 shadow-sm">
+      <p className="mb-3 flex items-center gap-1.5 text-sm font-bold text-zinc-800">
+        <PaletteIcon className="h-4 w-4 text-sky-600" />
+        디자인
+      </p>
+
+      {/* 테마 프리셋 */}
+      <p className="mb-1.5 text-[11px] font-semibold text-zinc-500">테마 프리셋</p>
+      <div className="mb-4 flex flex-wrap gap-2">
+        {THEME_PRESETS.map((p) => {
+          const active =
+            design.bg === p.design.bg &&
+            design.text === p.design.text &&
+            design.texture === p.design.texture;
+          return (
+            <button
+              key={p.name}
+              type="button"
+              onClick={() => onChange(p.design)}
+              className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition ${
+                active
+                  ? "border-sky-400 ring-2 ring-sky-100"
+                  : "border-zinc-200 hover:border-sky-300"
+              }`}
+            >
+              <span
+                className="h-4 w-4 rounded-full border border-black/10"
+                style={{ backgroundColor: p.design.bg }}
+              />
+              <span style={{ color: "#3f3f46" }}>{p.name}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* 배경색 */}
+      <SwatchRow
+        label="배경색"
+        swatches={BG_SWATCHES}
+        value={design.bg}
+        onPick={(c) => onChange({ bg: c })}
+      />
+
+      {/* 글자색 */}
+      <SwatchRow
+        label="글자색"
+        swatches={TEXT_SWATCHES}
+        value={design.text}
+        onPick={(c) => onChange({ text: c })}
+      />
+
+      {/* 폰트 */}
+      <p className="mb-1.5 mt-4 text-[11px] font-semibold text-zinc-500">폰트</p>
+      <div className="flex gap-2">
+        {FONTS.map((f) => (
+          <SegBtn
+            key={f.key}
+            active={design.font === f.key}
+            onClick={() => onChange({ font: f.key })}
+          >
+            {f.label}
+          </SegBtn>
+        ))}
+      </div>
+
+      {/* 배경 질감 */}
+      <p className="mb-1.5 mt-4 text-[11px] font-semibold text-zinc-500">
+        배경 질감
+      </p>
+      <div className="flex flex-wrap gap-2">
+        {TEXTURES.map((t) => (
+          <SegBtn
+            key={t.key}
+            active={design.texture === t.key}
+            onClick={() => onChange({ texture: t.key })}
+          >
+            {t.label}
+          </SegBtn>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function SwatchRow({
+  label,
+  swatches,
+  value,
+  onPick,
+}: {
+  label: string;
+  swatches: string[];
+  value: string;
+  onPick: (c: string) => void;
+}) {
+  const isPreset = swatches.includes(value.toLowerCase());
+  return (
+    <div className="mt-3">
+      <p className="mb-1.5 text-[11px] font-semibold text-zinc-500">{label}</p>
+      <div className="flex flex-wrap items-center gap-2">
+        {swatches.map((c) => (
+          <button
+            key={c}
+            type="button"
+            aria-label={`${label} ${c}`}
+            onClick={() => onPick(c)}
+            className={`h-7 w-7 rounded-full border transition ${
+              value.toLowerCase() === c
+                ? "border-sky-500 ring-2 ring-sky-200"
+                : "border-black/10 hover:scale-105"
+            }`}
+            style={{ backgroundColor: c }}
+          />
+        ))}
+        {/* 사용자 지정 색 */}
+        <label
+          className={`relative flex h-7 w-7 cursor-pointer items-center justify-center overflow-hidden rounded-full border text-[9px] font-bold text-zinc-500 ${
+            !isPreset ? "border-sky-500 ring-2 ring-sky-200" : "border-zinc-300"
+          }`}
+          style={
+            !isPreset
+              ? { backgroundColor: value }
+              : {
+                  background:
+                    "conic-gradient(from 0deg, #f87171, #fbbf24, #34d399, #60a5fa, #a78bfa, #f87171)",
+                }
+          }
+          title="사용자 지정 색"
+        >
+          <input
+            type="color"
+            value={value}
+            onChange={(e) => onPick(e.target.value)}
+            className="absolute inset-0 cursor-pointer opacity-0"
+          />
+          {isPreset && <span className="drop-shadow">＋</span>}
+        </label>
+      </div>
+    </div>
+  );
+}
+
+function SegBtn({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition ${
+        active
+          ? "border-sky-500 bg-sky-50 text-sky-700"
+          : "border-zinc-200 text-zinc-600 hover:border-sky-300"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
 function TabButton({
   active,
   onClick,
@@ -624,6 +866,28 @@ function PencilIcon({ className }: { className?: string }) {
     >
       <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
       <path d="m15 5 4 4" />
+    </svg>
+  );
+}
+
+function PaletteIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <circle cx="13.5" cy="6.5" r=".5" fill="currentColor" />
+      <circle cx="17.5" cy="10.5" r=".5" fill="currentColor" />
+      <circle cx="8.5" cy="7.5" r=".5" fill="currentColor" />
+      <circle cx="6.5" cy="12.5" r=".5" fill="currentColor" />
+      <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.555C21.965 6.012 17.461 2 12 2Z" />
     </svg>
   );
 }
