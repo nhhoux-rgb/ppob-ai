@@ -35,6 +35,7 @@ export type TrackResult = {
   lastEvent: string;
   events: TrackEvent[];
   error?: string;
+  _rawXml?: string; // POSTAL_DEBUG=1 일 때만 채워짐 (필드 매핑 확인용)
 };
 
 export type TrackEvent = {
@@ -252,7 +253,9 @@ async function trackOne(number: string, serviceKey: string): Promise<TrackResult
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const xml = await res.text();
-      return parseEpostXml(xml, number);
+      const parsed = parseEpostXml(xml, number);
+      if (process.env.POSTAL_DEBUG === "1") parsed._rawXml = xml;
+      return parsed;
     } catch (e) {
       if (attempt > RETRY) {
         return blankResult(

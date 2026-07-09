@@ -22,6 +22,22 @@ npm install
 npm run dev
 ```
 
+## 배포 (Vercel)
+
+이 앱은 저장소 하위 폴더(`postal-tracker`)라, Vercel 프로젝트에서 **Root Directory**를
+`postal-tracker`로 지정해야 한다.
+
+1. Vercel → Add New Project → 이 저장소 import
+2. **Root Directory** = `postal-tracker` 로 설정 (Edit 눌러서 지정)
+3. Framework Preset = Next.js (자동 감지됨), Build/Output 기본값 그대로
+4. **Environment Variables** 등록 (`.env.example` 참고)
+   - `POSTAL_API_KEY` = 공공데이터포털 **Decoding** 인증키 (없으면 데모로 동작)
+   - `OPENAI_API_KEY` = 접수증 OCR 용 (없으면 사진 인식만 비활성)
+5. Deploy → 발급된 `*.vercel.app` 주소에서 확인
+6. (선택) 커스텀 도메인 연결 후 `NEXT_PUBLIC_SITE_URL` 에 그 주소 입력
+7. (선택) 애드센스/서치콘솔: `public/ads.txt` 는 준비됨. 도메인 인증 토큰은
+   `app/layout.tsx` 의 `metadata.verification` 에 추가한다.
+
 ## 조회 API 필드 매핑 확정
 
 `app/api/track/route.ts` 의 `parseEpostXml()` 는 응답 XML의 태그명을 후보 목록으로

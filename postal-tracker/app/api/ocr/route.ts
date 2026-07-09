@@ -92,6 +92,17 @@ export async function POST(req: Request) {
       );
     }
 
+    // OCR은 OpenAI 키가 있어야 동작. 미설정이면 붙여넣기로 안내.
+    if (!process.env.OPENAI_API_KEY) {
+      return Response.json(
+        {
+          error:
+            "사진 인식(OCR)은 아직 준비 중입니다. 우선 등기번호를 직접 붙여넣어 조회해 주세요.",
+        },
+        { status: 503 }
+      );
+    }
+
     // ── OpenAI 호출 (클라이언트는 요청 시점에 생성: 빌드 안전) ──
     const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
