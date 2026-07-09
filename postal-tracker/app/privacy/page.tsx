@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/privacy" },
   title: "개인정보처리방침 · 등기조회",
   description:
     "등기조회 서비스의 등기번호·접수증 이미지 처리, 쿠키·광고에 관한 안내입니다.",
