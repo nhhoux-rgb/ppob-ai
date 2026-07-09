@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState, type ChangeEvent } from "react";
+import Link from "next/link";
 import SiteFooter from "./site-footer";
 import VisitorCount from "./visitor-count";
 import SharePageButton from "./share-page-button";
@@ -486,6 +487,28 @@ export default function Home() {
           분양·법무·관리사무소 등 대량 등기 발송이 잦은 실무에 특히 유용합니다. 조회는
           우정사업본부 공식 오픈API를 사용합니다.
         </p>
+      </section>
+
+      {/* 가이드 링크 (내부 링크 + 콘텐츠) */}
+      <section className="mt-8">
+        <h2 className="mb-3 text-base font-bold text-zinc-800">등기우편 가이드</h2>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {[
+            { href: "/guide/how-to-track", label: "등기번호로 배송조회 하는 법" },
+            { href: "/guide/returned", label: "등기 반송 사유와 대처법" },
+            { href: "/guide/bulk-send", label: "대량 등기 발송 방법과 준비물" },
+            { href: "/guide/mail-types", label: "등기·준등기·일반우편 차이" },
+            { href: "/guide/tracking-number", label: "등기번호 13자리 구조 읽는 법" },
+          ].map((g) => (
+            <Link
+              key={g.href}
+              href={g.href}
+              className="rounded-xl border border-zinc-100 bg-white px-4 py-3 text-sm font-medium text-zinc-700 shadow-sm transition hover:border-sky-200 hover:text-sky-700"
+            >
+              {g.label} →
+            </Link>
+          ))}
+        </div>
       </section>
 
       <div className="mt-8 flex justify-center">
