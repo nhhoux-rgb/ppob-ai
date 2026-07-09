@@ -42,8 +42,19 @@ function classify(r: TrackResult): Category {
   if (r.status === "데이터없음") return "none";
   const s = `${r.deliveryStatus} ${r.lastEvent}`;
   if (/반송|반환|수취거부/.test(s)) return "returned";
-  if (/미배달|미수취|미수령/.test(s)) return "undelivered";
   if (/배달완료|배달됨|배송완료/.test(s)) return "delivered";
+  if (/미배달|미수취|미수령/.test(s)) return "undelivered";
+  // 배달 우체국에 '도착'했지만 아직 수령 전인 경우도 미수령으로 본다.
+  // (○○우편집중국 '도착'은 이동 중이므로 제외)
+  const last = r.events[r.events.length - 1];
+  if (
+    last &&
+    /도착/.test(last.status) &&
+    /우체국$/.test(last.location) &&
+    !/집중국/.test(last.location)
+  ) {
+    return "undelivered";
+  }
   return "progress";
 }
 
@@ -62,7 +73,7 @@ const CAT_META: Record<
     dot: "bg-rose-500",
   },
   undelivered: {
-    label: "미배달",
+    label: "미수령",
     badge: "bg-orange-50 text-orange-700 border-orange-200",
     dot: "bg-orange-500",
   },
@@ -87,7 +98,7 @@ const FILTERS: { key: "all" | Category; label: string }[] = [
   { key: "all", label: "전체" },
   { key: "delivered", label: "배달완료" },
   { key: "returned", label: "반송" },
-  { key: "undelivered", label: "미배달" },
+  { key: "undelivered", label: "미수령" },
   { key: "progress", label: "배송중" },
   { key: "none", label: "조회안됨" },
   { key: "error", label: "오류" },
