@@ -3,8 +3,10 @@ import SharePageButton from "./share-page-button";
 
 const LINKS = [
   { href: "/", label: "홈" },
+  { href: "/guide", label: "가이드" },
   { href: "/how-to-use", label: "이용 방법" },
   { href: "/faq", label: "자주 묻는 질문" },
+  { href: "/about", label: "소개·문의" },
   { href: "/privacy", label: "개인정보처리방침" },
 ];
 
