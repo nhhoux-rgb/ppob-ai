@@ -56,75 +56,21 @@ function scalar(v: unknown): string {
   return String(v).trim();
 }
 
-// 파싱된 객체 트리에서 후보 키에 해당하는 첫 스칼라 값을 재귀 탐색
-function pickDeep(node: unknown, candidates: string[]): string {
-  const wanted = candidates.map((c) => c.toLowerCase());
-  const stack: unknown[] = [node];
-  while (stack.length) {
-    const cur = stack.pop();
-    if (cur && typeof cur === "object") {
-      for (const [k, val] of Object.entries(cur as Record<string, unknown>)) {
-        if (wanted.includes(k.toLowerCase())) {
-          const s = scalar(val);
-          if (s) return s;
-        }
-        if (val && typeof val === "object") stack.push(val);
-      }
-    }
+// 여러 후보 키 중 첫 번째로 값이 있는 스칼라를 반환
+function pick(o: Record<string, unknown>, keys: string[]): string {
+  for (const k of keys) {
+    const s = scalar(o?.[k]);
+    if (s) return s;
   }
   return "";
 }
 
-// 종적 이벤트 배열을 트리에서 찾는다: 날짜/시간/처리현황스러운 필드를 가진
-// 객체들의 배열을 우선 채택.
-function findEventArray(node: unknown): Record<string, unknown>[] {
-  const stack: unknown[] = [node];
-  let best: Record<string, unknown>[] = [];
-  while (stack.length) {
-    const cur = stack.pop();
-    if (Array.isArray(cur)) {
-      const objs = cur.filter(
-        (x) => x && typeof x === "object"
-      ) as Record<string, unknown>[];
-      const looksLikeEvents = objs.some((o) =>
-        Object.keys(o).some((k) =>
-          /date|time|일자|시간|현황|status|위치|location|처리/i.test(k)
-        )
-      );
-      if (looksLikeEvents && objs.length > best.length) best = objs;
-      for (const x of cur) if (x && typeof x === "object") stack.push(x);
-    } else if (cur && typeof cur === "object") {
-      for (const val of Object.values(cur as Record<string, unknown>)) {
-        if (val && typeof val === "object") stack.push(val);
-      }
-    }
-  }
-  return best;
-}
-
-function mapEvent(o: Record<string, unknown>): TrackEvent {
-  return {
-    date: pickDeep(o, ["date", "일자", "occrDate", "workDate", "dlvyDate"]),
-    time: pickDeep(o, ["time", "시간", "occrTime", "workTime"]),
-    location: pickDeep(o, [
-      "location",
-      "현재위치",
-      "발생국",
-      "office",
-      "place",
-      "postOffice",
-      "우체국",
-    ]),
-    status: pickDeep(o, [
-      "status",
-      "처리현황",
-      "처리",
-      "stateKind",
-      "작업진행상태",
-      "progress",
-    ]),
-    detail: pickDeep(o, ["detail", "description", "상세", "비고", "detailDc"]),
-  };
+// fast-xml-parser는 요소가 1개면 객체, 여러 개면 배열로 준다 → 항상 배열로 정규화.
+function toArray(v: unknown): Record<string, unknown>[] {
+  if (v === undefined || v === null) return [];
+  return (Array.isArray(v) ? v : [v]).filter(
+    (x) => x && typeof x === "object"
+  ) as Record<string, unknown>[];
 }
 
 const parser = new XMLParser({
@@ -134,23 +80,19 @@ const parser = new XMLParser({
 });
 
 function parseEpostXml(xml: string, number: string): TrackResult {
-  const obj = parser.parse(xml);
+  const obj = parser.parse(xml) as Record<string, unknown>;
+  const root = (obj?.LongitudinalDomesticListResponse ?? obj ?? {}) as Record<
+    string,
+    unknown
+  >;
+  const header = (root.cmmMsgHeader ?? {}) as Record<string, unknown>;
 
-  // data.go.kr 공통 에러 봉투 감지 (키 미등록/트래픽초과 등)
-  // 실제 에러 응답 예: <cmmMsgHeader><successYN>N</successYN>
-  //   <returnCode>30</returnCode><errMsg>SERVICE KEY IS NOT REGISTERED ERROR.</errMsg>
-  const successYN = pickDeep(obj, ["successYN"]).toUpperCase();
-  const errMsg = pickDeep(obj, [
-    "errMsg",
-    "returnAuthMsg",
-    "resultMsg",
-    "cmmMsgHeader",
-  ]);
-  const errCode = pickDeep(obj, [
-    "returnCode",
-    "returnReasonCode",
-    "resultCode",
-  ]);
+  // ── 에러 봉투 감지 ──
+  // 정상: <successYN>Y</successYN><returnCode>00</returnCode>
+  // 오류: <successYN>N</successYN><returnCode>30</returnCode><errMsg>...ERROR</errMsg>
+  const successYN = scalar(header.successYN).toUpperCase();
+  const errMsg = scalar(header.errMsg);
+  const errCode = scalar(header.returnCode);
   if (
     successYN === "N" ||
     (errMsg && /ERROR|NOT_REGISTERED|LIMIT|DENY|INVALID|등록되지|초과/i.test(errMsg))
@@ -162,38 +104,23 @@ function parseEpostXml(xml: string, number: string): TrackResult {
     );
   }
 
-  const sender = pickDeep(obj, [
-    "sender",
-    "senderName",
-    "발송인",
-    "보내는분",
-    "fromName",
-  ]);
-  const recipient = pickDeep(obj, [
-    "receiver",
-    "recipient",
-    "수취인",
-    "받는분",
-    "toName",
-    "recvName",
-  ]);
-  const mailType = pickDeep(obj, ["mailType", "우편물종류", "종류", "postType"]);
-  const deliveryStatus = pickDeep(obj, [
-    "deliveryStatus",
-    "배달상태",
-    "처리상태",
-    "stateKind",
-    "trackState",
-  ]);
-  const deliveryDate = pickDeep(obj, [
-    "deliveryDate",
-    "배달일자",
-    "배달일",
-    "수령인배달일",
-    "dlvyDate",
-  ]);
+  // ── 실제 태그명 매핑 (getLongitudinalDomesticList 응답 기준) ──
+  const sender = pick(root, ["applcntNm", "sender", "발송인"]);
+  const recipient = pick(root, ["addrseNm", "receiver", "수취인"]);
+  const mailType = pick(root, ["pstmtrKnd", "mailType", "우편물종류"]);
+  const deliveryStatus = pick(root, ["dlvySttus", "deliveryStatus", "배달상태"]);
+  const deliveryDate = pick(root, ["dlvyDe", "deliveryDate", "배달일자"]);
 
-  const events = findEventArray(obj).map(mapEvent);
+  const events: TrackEvent[] = toArray(root.longitudinalDomesticList).map(
+    (e) => ({
+      date: pick(e, ["dlvyDate", "date"]),
+      time: pick(e, ["dlvyTime", "time"]),
+      location: pick(e, ["nowLc", "location", "현재위치"]),
+      status: pick(e, ["processSttus", "status", "처리현황"]),
+      detail: pick(e, ["detailDc", "detail", "상세"]),
+    })
+  );
+
   const last = events[events.length - 1];
   const lastEvent = last
     ? [last.date, last.time, last.location, last.status]
@@ -201,8 +128,7 @@ function parseEpostXml(xml: string, number: string): TrackResult {
         .join(" ")
     : "";
 
-  const hasAny =
-    sender || recipient || deliveryStatus || events.length > 0;
+  const hasAny = sender || recipient || deliveryStatus || events.length > 0;
   if (!hasAny) {
     return blankResult(number, "데이터없음", "");
   }
