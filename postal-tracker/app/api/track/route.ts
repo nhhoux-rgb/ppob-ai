@@ -136,15 +136,29 @@ function parseEpostXml(xml: string, number: string): TrackResult {
   const obj = parser.parse(xml);
 
   // data.go.kr 공통 에러 봉투 감지 (키 미등록/트래픽초과 등)
+  // 실제 에러 응답 예: <cmmMsgHeader><successYN>N</successYN>
+  //   <returnCode>30</returnCode><errMsg>SERVICE KEY IS NOT REGISTERED ERROR.</errMsg>
+  const successYN = pickDeep(obj, ["successYN"]).toUpperCase();
   const errMsg = pickDeep(obj, [
-    "returnAuthMsg",
     "errMsg",
+    "returnAuthMsg",
     "resultMsg",
-    "returnReasonCode",
+    "cmmMsgHeader",
   ]);
-  const errCode = pickDeep(obj, ["returnReasonCode", "resultCode"]);
-  if (errMsg && /ERROR|NOT_REGISTERED|LIMIT|DENY|INVALID/i.test(errMsg)) {
-    return blankResult(number, "오류", `우체국 API: ${errMsg}${errCode ? ` (${errCode})` : ""}`);
+  const errCode = pickDeep(obj, [
+    "returnCode",
+    "returnReasonCode",
+    "resultCode",
+  ]);
+  if (
+    successYN === "N" ||
+    (errMsg && /ERROR|NOT_REGISTERED|LIMIT|DENY|INVALID|등록되지|초과/i.test(errMsg))
+  ) {
+    return blankResult(
+      number,
+      "오류",
+      `우체국 API: ${errMsg || "조회 실패"}${errCode ? ` (${errCode})` : ""}`
+    );
   }
 
   const sender = pickDeep(obj, [
