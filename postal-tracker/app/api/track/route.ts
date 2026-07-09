@@ -241,9 +241,14 @@ function blankResult(
 
 // ── 실제 우체국 API 1건 조회 ─────────────────────────────────────
 async function trackOne(number: string, serviceKey: string): Promise<TrackResult> {
-  // data.go.kr 은 "일반 인증키(Decoding)"를 넣고 URLSearchParams로 인코딩하는 게 안전.
-  const qs = new URLSearchParams({ serviceKey, rgist: number });
-  const url = `${EPOST_ENDPOINT}?${qs.toString()}`;
+  // data.go.kr 은 Encoding/Decoding 두 형태의 인증키를 준다.
+  // 어느 걸 넣어도 동작하도록: 이미 %XX 인코딩이 있으면(Encoding 키) 그대로,
+  // 없으면(Decoding 키) 한 번 인코딩한다. (Encoding 키를 또 인코딩하면 깨짐)
+  const key = serviceKey.trim();
+  const encodedKey = /%[0-9A-Fa-f]{2}/.test(key) ? key : encodeURIComponent(key);
+  const url = `${EPOST_ENDPOINT}?serviceKey=${encodedKey}&rgist=${encodeURIComponent(
+    number
+  )}`;
 
   for (let attempt = 1; attempt <= RETRY + 1; attempt++) {
     try {
