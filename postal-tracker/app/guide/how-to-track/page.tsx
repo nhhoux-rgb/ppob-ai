@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Article from "../article";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/guide/how-to-track" },
   title: "등기번호로 배송조회 하는 법 · 등기조회",
   description:
     "등기번호 하나부터 수백 건까지 우체국 배송상태를 확인하는 방법. 한 건 조회와 대량 일괄조회, 접수증 사진 인식까지 정리했습니다.",

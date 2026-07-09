@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Article from "../article";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/guide/tracking-number" },
   title: "등기번호(13자리) 구조와 읽는 법 · 등기조회",
   description:
     "등기번호는 13자리 숫자로 이루어집니다. 번호의 구성과 접수증에서 등기번호를 빠르게 찾는 요령을 정리했습니다.",

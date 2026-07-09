@@ -3,6 +3,7 @@ import Link from "next/link";
 import SiteFooter from "../site-footer";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/guide" },
   title: "등기우편 가이드 · 등기조회",
   description:
     "등기번호 조회 방법, 반송 사유와 대처, 대량 발송 준비물, 등기·준등기·일반우편 차이, 등기번호 구조까지 — 등기우편 실무에 필요한 내용을 정리했습니다.",

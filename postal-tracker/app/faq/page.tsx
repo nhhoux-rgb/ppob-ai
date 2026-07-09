@@ -3,6 +3,7 @@ import Link from "next/link";
 import SiteFooter from "../site-footer";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/faq" },
   title: "자주 묻는 질문 · 등기조회",
   description:
     "등기번호 대량 일괄조회, 접수증 OCR 인식, 배송상태·반송 확인, CSV 저장에 관해 자주 묻는 질문을 모았습니다.",
@@ -35,10 +36,24 @@ const QA = [
   },
 ];
 
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: QA.map((item) => ({
+    "@type": "Question",
+    name: item.q,
+    acceptedAnswer: { "@type": "Answer", text: item.a },
+  })),
+};
+
 export default function Faq() {
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-zinc-900">
       <main className="mx-auto w-full max-w-[640px] px-5 py-10 sm:px-6">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+        />
         <Link
           href="/"
           className="text-sm font-semibold text-sky-600 hover:text-sky-700"

@@ -3,6 +3,7 @@ import Link from "next/link";
 import SiteFooter from "../site-footer";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/about" },
   title: "소개 및 문의 · 등기조회",
   description:
     "등기조회 서비스 소개와 문의 안내입니다. 등기번호 대량 일괄 배송조회와 접수증 인식 기능을 제공합니다.",

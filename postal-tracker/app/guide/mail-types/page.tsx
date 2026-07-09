@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Article from "../article";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/guide/mail-types" },
   title: "등기 · 준등기 · 일반우편 차이 · 등기조회",
   description:
     "등기, 준등기, 일반우편은 추적 여부·수령 방식·비용이 다릅니다. 각각의 특징과 상황별 선택 기준을 정리했습니다.",
