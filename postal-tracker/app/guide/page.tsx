@@ -11,6 +11,21 @@ export const metadata: Metadata = {
 
 const ARTICLES = [
   {
+    href: "/guide/track-methods",
+    title: "우체국 등기 배송조회 하는 3가지 방법",
+    desc: "홈페이지 단건 조회, 앱·문자 알림, 대량 일괄조회를 비교합니다. 여러 건이면 어떤 게 편한지.",
+  },
+  {
+    href: "/guide/excel-bulk",
+    title: "등기 여러 건을 엑셀로 한 번에 조회하기",
+    desc: "엑셀·CSV의 등기번호를 붙여넣기 한 번으로 조회하고 결과를 다시 엑셀로 저장하는 법.",
+  },
+  {
+    href: "/guide/undelivered",
+    title: "등기 미수령·미배달 확인하고 대처하는 법",
+    desc: "미수령·미배달이 무엇인지, 조회로 확인하고 재발송·재방문으로 대처하는 방법.",
+  },
+  {
     href: "/guide/how-to-track",
     title: "등기번호로 배송조회 하는 법 (대량 조회 포함)",
     desc: "등기번호 하나부터 수백 건까지, 우체국 배송상태를 확인하는 방법을 정리했습니다.",
