@@ -30,7 +30,7 @@ export default function AboutPage() {
               등기우편 대량조회는 <strong>등기번호를 대량으로 한 번에 조회</strong>하는
               도구입니다. 우편물을 많이 발송하는 실무에서, 등기번호를 한 건씩 입력하는
               번거로움을 줄이기 위해 만들었습니다. 접수증 사진을 올리면 등기번호를 자동
-              으로 읽고, 배달완료·반송·배송중 상태를 표로 정리해 CSV로 내려받을 수
+              으로 읽고, 배달완료·반송·미수령 상태를 표로 정리해 엑셀 파일로 내려받을 수
               있습니다.
             </p>
           </section>
@@ -38,9 +38,9 @@ export default function AboutPage() {
           <section>
             <h2 className="mb-2 text-base font-bold text-zinc-900">주요 기능</h2>
             <ul className="list-disc space-y-1.5 pl-5">
-              <li>등기번호 붙여넣기 · CSV 업로드 · 접수증 사진 인식</li>
+              <li>등기번호 붙여넣기 · 파일 업로드 · 접수증 사진 인식</li>
               <li>여러 건을 한 번에 조회하고 상태별로 필터링</li>
-              <li>결과를 CSV(발송대장)로 저장</li>
+              <li>결과를 엑셀 파일(발송대장)로 저장</li>
             </ul>
           </section>
 

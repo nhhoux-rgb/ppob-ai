@@ -314,7 +314,7 @@ export default function Home() {
         <p className="mt-2 text-sm text-zinc-500 sm:text-base">
           등기번호를 붙여넣거나 <b>접수증 사진</b>을 올리면 우체국 배송상태를 한 번에
           조회합니다. 등기 <b>대량조회·일괄조회</b>로 배달완료·반송·미수령을 표로 정리하고
-          CSV로 내려받으세요.
+          엑셀로 내려받으세요.
         </p>
       </header>
 
@@ -336,7 +336,7 @@ export default function Home() {
             onClick={() => fileRef.current?.click()}
             className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 px-3.5 py-2 text-sm font-semibold text-zinc-700 transition hover:border-zinc-300"
           >
-            📄 CSV·TXT 불러오기
+            📄 파일 불러오기
           </button>
           {parsed.length > 0 && (
             <span className="ml-auto text-xs font-semibold text-sky-600">
@@ -446,7 +446,7 @@ export default function Home() {
               onClick={downloadCsv}
               className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-3.5 py-1.5 text-xs font-bold text-white transition hover:bg-emerald-500"
             >
-              ⬇ CSV 저장
+              ⬇ 엑셀 저장
             </button>
           </div>
 
@@ -507,7 +507,7 @@ export default function Home() {
           우편물을 대량으로 발송하면 접수증(영수증)에 등기번호가 여러 건 찍혀 나옵니다.
           한 건씩 우체국 홈페이지에서 등기번호를 조회하는 대신, 접수증 사진을 올리면
           등기번호를 자동으로 읽어 <b>여러 건을 한 번에</b> 조회합니다. 배달완료·반송·
-          <b>미수령</b>·배송중 상태를 정리해 CSV(발송대장)로 저장할 수 있습니다.
+          <b>미수령</b>·배송중 상태를 정리해 엑셀 파일(발송대장)로 저장할 수 있습니다.
         </p>
         <p className="text-zinc-500">
           등기우편 대량조회가 필요한 분양·법무·관리사무소 등 실무에 특히 유용합니다. 등기

@@ -57,7 +57,7 @@ export default function Page() {
         </p>
         <ul>
           <li>
-            <strong>세 가지 입력</strong> — 등기번호 붙여넣기, CSV·TXT 업로드, 그리고
+            <strong>세 가지 입력</strong> — 등기번호 붙여넣기, 파일 업로드, 그리고
             <strong> 접수증 사진을 올리면 등기번호를 자동 인식</strong>합니다. 손으로 옮겨
             적을 필요가 없습니다.
           </li>
@@ -66,7 +66,7 @@ export default function Page() {
             <strong> 반송·미수령만 필터링</strong>해 후속조치할 건만 바로 추립니다.
           </li>
           <li>
-            <strong>기록으로 저장</strong> — 결과를 CSV로 내려받아 엑셀 발송대장으로
+            <strong>기록으로 저장</strong> — 결과를 엑셀 파일로 내려받아 발송대장으로
             관리합니다.
           </li>
           <li>
