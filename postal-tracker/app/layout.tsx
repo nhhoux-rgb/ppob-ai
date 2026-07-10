@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: "등기우편 대량조회 · 등기번호 일괄 배송조회",
   description:
-    "등기번호를 붙여넣거나 접수증 사진을 올리면 우체국 배송상태를 한 번에 조회합니다. 배달완료·미수령·반송을 표로 정리하고 CSV로 내려받으세요. 대량 등기 발송 실무에 딱.",
+    "등기번호를 붙여넣거나 접수증 사진을 올리면 우체국 배송상태를 한 번에 조회합니다. 배달완료·미수령·반송을 표로 정리하고 엑셀로 내려받으세요. 대량 등기 발송 실무에 딱.",
   applicationName: "등기우편 대량조회",
   keywords: [
     "등기 조회",
@@ -48,14 +48,14 @@ export const metadata: Metadata = {
     siteName: "등기우편 대량조회",
     title: "등기우편 대량조회 · 등기번호 일괄 배송조회",
     description:
-      "등기번호 붙여넣기 또는 접수증 사진 한 장으로 우체국 배송상태를 한 번에. 반송·미수령을 표로 확인하고 CSV로 저장하세요.",
+      "등기번호 붙여넣기 또는 접수증 사진 한 장으로 우체국 배송상태를 한 번에. 반송·미수령을 표로 확인하고 엑셀로 저장하세요.",
     url: "/",
     locale: "ko_KR",
   },
   twitter: {
     card: "summary_large_image",
     title: "등기우편 대량조회 · 등기번호 일괄 배송조회",
-    description: "등기번호 대량 일괄 배송조회 — 반송·미수령 한눈에, CSV 저장.",
+    description: "등기번호 대량 일괄 배송조회 — 반송·미수령 한눈에, 엑셀 저장.",
   },
   verification: {
     ...(googleVerify ? { google: googleVerify } : {}),
@@ -96,7 +96,7 @@ const jsonLd = [
     inLanguage: "ko-KR",
     offers: { "@type": "Offer", price: "0", priceCurrency: "KRW" },
     description:
-      "등기번호 붙여넣기·CSV·접수증 사진으로 우체국 배송상태를 한 번에 조회하고 CSV로 저장하는 도구.",
+      "등기번호 붙여넣기·파일·접수증 사진으로 우체국 배송상태를 한 번에 조회하고 엑셀로 저장하는 도구.",
   },
 ];
 
