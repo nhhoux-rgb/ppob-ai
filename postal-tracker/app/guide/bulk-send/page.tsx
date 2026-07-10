@@ -3,7 +3,7 @@ import Article from "../article";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/guide/bulk-send" },
-  title: "대량 등기 발송 방법과 준비물 · 등기조회",
+  title: "대량 등기 발송 방법과 준비물 · 등기우편 대량조회",
   description:
     "우체국 창구 대량 접수, 요금후납·계약등기, 주소록·라벨 준비 등 등기우편을 대량으로 효율적으로 발송하는 방법을 정리했습니다.",
 };

@@ -3,7 +3,7 @@ import Article from "../article";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/guide/excel-bulk" },
-  title: "등기 여러 건을 엑셀로 한 번에 조회하기 · 등기조회",
+  title: "등기 여러 건을 엑셀로 한 번에 조회하기 · 등기우편 대량조회",
   description:
     "엑셀·CSV에 정리된 등기번호를 한 번에 조회하고 결과를 다시 엑셀로 저장하는 방법. 접수증만 있어도 사진으로 등기번호를 자동 인식해 대량조회할 수 있습니다.",
 };

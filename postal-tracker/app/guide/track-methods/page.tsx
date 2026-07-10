@@ -3,7 +3,7 @@ import Article from "../article";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/guide/track-methods" },
-  title: "우체국 등기 배송조회 하는 3가지 방법 · 등기조회",
+  title: "우체국 등기 배송조회 하는 3가지 방법 · 등기우편 대량조회",
   description:
     "우체국 등기 배송조회 방법 3가지를 비교합니다. 홈페이지 단건 조회, 앱·문자 알림, 그리고 여러 건을 한 번에 조회하는 대량 일괄조회까지 — 상황별로 가장 편한 방법을 알려드립니다.",
 };

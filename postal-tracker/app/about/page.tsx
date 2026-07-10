@@ -4,9 +4,9 @@ import SiteFooter from "../site-footer";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/about" },
-  title: "소개 및 문의 · 등기조회",
+  title: "소개 및 문의 · 등기우편 대량조회",
   description:
-    "등기조회 서비스 소개와 문의 안내입니다. 등기번호 대량 일괄 배송조회와 접수증 인식 기능을 제공합니다.",
+    "등기우편 대량조회 서비스 소개와 문의 안내입니다. 등기번호 대량 일괄 배송조회와 접수증 인식 기능을 제공합니다.",
 };
 
 export default function AboutPage() {
@@ -27,7 +27,7 @@ export default function AboutPage() {
               어떤 서비스인가요
             </h2>
             <p>
-              등기조회는 <strong>등기번호를 대량으로 한 번에 조회</strong>하는
+              등기우편 대량조회는 <strong>등기번호를 대량으로 한 번에 조회</strong>하는
               도구입니다. 우편물을 많이 발송하는 실무에서, 등기번호를 한 건씩 입력하는
               번거로움을 줄이기 위해 만들었습니다. 접수증 사진을 올리면 등기번호를 자동
               으로 읽고, 배달완료·반송·배송중 상태를 표로 정리해 CSV로 내려받을 수

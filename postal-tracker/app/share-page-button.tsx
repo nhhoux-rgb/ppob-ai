@@ -12,7 +12,7 @@ export default function SharePageButton({
   async function share() {
     const url = typeof window !== "undefined" ? window.location.href : "";
     const data = {
-      title: "등기조회 · 등기번호 대량 일괄 배송조회",
+      title: "등기우편 대량조회 · 등기번호 일괄 배송조회",
       text: "등기번호 붙여넣기 또는 접수증 사진 한 장으로 우체국 배송상태를 한 번에",
       url,
     };

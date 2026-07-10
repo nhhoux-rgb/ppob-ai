@@ -3,7 +3,7 @@ import Article from "../article";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/guide/returned" },
-  title: "등기우편 반송 사유와 대처법 · 등기조회",
+  title: "등기우편 반송 사유와 대처법 · 등기우편 대량조회",
   description:
     "폐문부재, 수취인불명, 수취거부 등 등기우편이 반송되는 이유와, 주소 보정·재발송 등 상황별 대처 방법을 정리했습니다.",
 };
