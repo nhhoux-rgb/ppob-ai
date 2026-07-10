@@ -6,6 +6,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const routes = [
     { path: "", priority: 1 },
     { path: "/guide", priority: 0.8 },
+    { path: "/guide/track-methods", priority: 0.7 },
+    { path: "/guide/excel-bulk", priority: 0.7 },
+    { path: "/guide/undelivered", priority: 0.7 },
     { path: "/guide/how-to-track", priority: 0.7 },
     { path: "/guide/returned", priority: 0.7 },
     { path: "/guide/bulk-send", priority: 0.7 },

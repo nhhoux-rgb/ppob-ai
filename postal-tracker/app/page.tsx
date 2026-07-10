@@ -521,11 +521,12 @@ export default function Home() {
         <h2 className="mb-3 text-base font-bold text-zinc-800">등기우편 가이드</h2>
         <div className="grid gap-2 sm:grid-cols-2">
           {[
+            { href: "/guide/track-methods", label: "우체국 등기 배송조회 3가지 방법" },
+            { href: "/guide/excel-bulk", label: "등기 여러 건 엑셀로 한 번에 조회" },
+            { href: "/guide/undelivered", label: "등기 미수령·미배달 확인·대처" },
             { href: "/guide/how-to-track", label: "등기번호로 배송조회 하는 법" },
             { href: "/guide/returned", label: "등기 반송 사유와 대처법" },
             { href: "/guide/bulk-send", label: "대량 등기 발송 방법과 준비물" },
-            { href: "/guide/mail-types", label: "등기·준등기·일반우편 차이" },
-            { href: "/guide/tracking-number", label: "등기번호 13자리 구조 읽는 법" },
           ].map((g) => (
             <Link
               key={g.href}
