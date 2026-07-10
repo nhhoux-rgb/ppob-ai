@@ -8,6 +8,13 @@ export const contentType = "image/png";
 const FONT_URL =
   "https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/packages/pretendard/dist/public/static/Pretendard-Bold.otf";
 
+const PILLS = [
+  { label: "배달완료", bg: "#10b981" },
+  { label: "반송", bg: "#f43f5e" },
+  { label: "미수령", bg: "#f97316" },
+  { label: "배송중", bg: "#0ea5e9" },
+];
+
 export default async function OgImage() {
   // Try to load a Korean font; if it fails for any reason, fall back to a
   // Latin-only card so the build can never break because of this file.
@@ -35,31 +42,69 @@ export default async function OgImage() {
           height: "100%",
           display: "flex",
           flexDirection: "column",
-          alignItems: "center",
           justifyContent: "center",
+          padding: "0 96px",
           background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
           color: "#ffffff",
           fontFamily: korean ? "Pretendard" : "sans-serif",
         }}
       >
-        <div style={{ display: "flex", fontSize: 120, letterSpacing: -3 }}>
-          {korean ? "등기우편 대량조회" : "TRACKING"}
-        </div>
-        <div style={{ display: "flex", marginTop: 16, fontSize: 48 }}>
-          {korean ? "등기번호 일괄 배송조회" : "Bulk Mail Tracking"}
-        </div>
         <div
           style={{
             display: "flex",
-            marginTop: 24,
-            fontSize: 30,
+            fontSize: 32,
+            letterSpacing: 2,
+            color: "#7dd3fc",
+          }}
+        >
+          {korean ? "우체국 등기우편 배송조회" : "POSTAL TRACKING"}
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            fontSize: 108,
+            fontWeight: 700,
+            letterSpacing: -4,
+            marginTop: 12,
+          }}
+        >
+          {korean ? "등기우편 대량조회" : "Bulk Mail Tracking"}
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            fontSize: 36,
             opacity: 0.85,
+            marginTop: 20,
           }}
         >
           {korean
-            ? "접수증 사진 한 장으로 배송상태를 한 번에"
-            : "Scan a receipt, track every item at once"}
+            ? "등기번호 붙여넣기 · 접수증 사진으로 한 번에"
+            : "Paste numbers or scan a receipt — track them all at once"}
         </div>
+
+        {korean && (
+          <div style={{ display: "flex", gap: 16, marginTop: 44 }}>
+            {PILLS.map((p) => (
+              <div
+                key={p.label}
+                style={{
+                  display: "flex",
+                  background: p.bg,
+                  color: "#ffffff",
+                  fontSize: 30,
+                  fontWeight: 700,
+                  padding: "10px 28px",
+                  borderRadius: 999,
+                }}
+              >
+                {p.label}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     ),
     { ...size, fonts }
