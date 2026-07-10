@@ -3,7 +3,7 @@ import Article from "../article";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/guide/undelivered" },
-  title: "등기 미수령·미배달 확인하고 대처하는 법 · 등기조회",
+  title: "등기 미수령·미배달 확인하고 대처하는 법 · 등기우편 대량조회",
   description:
     "등기 미수령·미배달이 무엇인지, 배송조회로 확인하는 방법과 재방문·보관·재발송 등 대처법을 정리했습니다. 대량 발송에서는 미수령 건만 골라 빠르게 관리하세요.",
 };

@@ -3,9 +3,9 @@ import Link from "next/link";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/privacy" },
-  title: "개인정보처리방침 · 등기조회",
+  title: "개인정보처리방침 · 등기우편 대량조회",
   description:
-    "등기조회 서비스의 등기번호·접수증 이미지 처리, 쿠키·광고에 관한 안내입니다.",
+    "등기우편 대량조회 서비스의 등기번호·접수증 이미지 처리, 쿠키·광고에 관한 안내입니다.",
 };
 
 export default function PrivacyPage() {
@@ -27,7 +27,7 @@ export default function PrivacyPage() {
         <div className="mt-8 space-y-8 text-sm leading-relaxed text-zinc-700">
           <section>
             <p>
-              등기조회(이하 &ldquo;서비스&rdquo;)는 이용자의 개인정보를 중요하게
+              등기우편 대량조회(이하 &ldquo;서비스&rdquo;)는 이용자의 개인정보를 중요하게
               생각하며, 관련 법령을 준수합니다. 본 방침은 서비스가 어떤 정보를
               수집하고 어떻게 이용·보호하는지 설명합니다.
             </p>

@@ -300,7 +300,7 @@ export default function Home() {
     const a = document.createElement("a");
     const stamp = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Seoul" });
     a.href = url;
-    a.download = `등기조회_${stamp}.csv`;
+    a.download = `등기우편조회_${stamp}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -309,7 +309,7 @@ export default function Home() {
     <main className="mx-auto w-full max-w-3xl grow px-4 py-8 sm:py-12">
       <header className="mb-6 text-center">
         <h1 className="text-2xl font-black tracking-tight text-zinc-900 sm:text-3xl">
-          📮 등기조회 · 대량 일괄 배송조회
+          📮 등기우편 대량조회
         </h1>
         <p className="mt-2 text-sm text-zinc-500 sm:text-base">
           등기번호를 붙여넣거나 <b>접수증 사진</b>을 올리면 우체국 배송상태를 한 번에

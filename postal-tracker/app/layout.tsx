@@ -21,10 +21,10 @@ const naverVerify = process.env.NAVER_SITE_VERIFICATION;
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "등기조회 · 등기번호 대량 일괄 배송조회",
+  title: "등기우편 대량조회 · 등기번호 일괄 배송조회",
   description:
     "등기번호를 붙여넣거나 접수증 사진을 올리면 우체국 배송상태를 한 번에 조회합니다. 배달완료·미수령·반송을 표로 정리하고 CSV로 내려받으세요. 대량 등기 발송 실무에 딱.",
-  applicationName: "등기조회",
+  applicationName: "등기우편 대량조회",
   keywords: [
     "등기 조회",
     "등기번호 조회",
@@ -45,8 +45,8 @@ export const metadata: Metadata = {
   alternates: { canonical: "/" },
   openGraph: {
     type: "website",
-    siteName: "등기조회",
-    title: "등기조회 · 등기번호 대량 일괄 배송조회",
+    siteName: "등기우편 대량조회",
+    title: "등기우편 대량조회 · 등기번호 일괄 배송조회",
     description:
       "등기번호 붙여넣기 또는 접수증 사진 한 장으로 우체국 배송상태를 한 번에. 반송·미수령을 표로 확인하고 CSV로 저장하세요.",
     url: "/",
@@ -54,7 +54,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "등기조회 · 등기번호 대량 일괄 배송조회",
+    title: "등기우편 대량조회 · 등기번호 일괄 배송조회",
     description: "등기번호 대량 일괄 배송조회 — 반송·미수령 한눈에, CSV 저장.",
   },
   verification: {
@@ -74,7 +74,7 @@ const jsonLd = [
   {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    name: "등기조회",
+    name: "등기우편 대량조회",
     url: siteUrl,
     description: "등기번호 대량 일괄 배송조회",
     inLanguage: "ko-KR",
@@ -82,14 +82,14 @@ const jsonLd = [
   {
     "@context": "https://schema.org",
     "@type": "Organization",
-    name: "등기조회",
+    name: "등기우편 대량조회",
     url: siteUrl,
     email: "pickupai2026@gmail.com",
   },
   {
     "@context": "https://schema.org",
     "@type": "WebApplication",
-    name: "등기조회 · 등기번호 대량 일괄 배송조회",
+    name: "등기우편 대량조회 · 등기번호 일괄 배송조회",
     url: siteUrl,
     applicationCategory: "BusinessApplication",
     operatingSystem: "Web",

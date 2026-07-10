@@ -4,7 +4,7 @@ import SiteFooter from "../site-footer";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/how-to-use" },
-  title: "이용 방법 · 등기조회",
+  title: "이용 방법 · 등기우편 대량조회",
   description:
     "접수증 사진을 올리거나 등기번호를 붙여넣어 우체국 배송상태를 한 번에 조회하고 CSV로 저장하는 방법을 안내합니다.",
 };

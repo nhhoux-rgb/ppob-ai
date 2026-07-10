@@ -4,7 +4,7 @@ import SiteFooter from "../site-footer";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/faq" },
-  title: "자주 묻는 질문 · 등기조회",
+  title: "자주 묻는 질문 · 등기우편 대량조회",
   description:
     "등기번호 대량 일괄조회, 접수증 OCR 인식, 배송상태·반송 확인, CSV 저장에 관해 자주 묻는 질문을 모았습니다.",
 };

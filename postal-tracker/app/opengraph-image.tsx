@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 
-export const alt = "등기조회 · 등기번호 대량 일괄 배송조회";
+export const alt = "등기우편 대량조회 · 등기번호 일괄 배송조회";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -43,10 +43,10 @@ export default async function OgImage() {
         }}
       >
         <div style={{ display: "flex", fontSize: 120, letterSpacing: -3 }}>
-          {korean ? "등기조회" : "TRACKING"}
+          {korean ? "등기우편 대량조회" : "TRACKING"}
         </div>
         <div style={{ display: "flex", marginTop: 16, fontSize: 48 }}>
-          {korean ? "등기번호 대량 일괄 배송조회" : "Bulk Mail Tracking"}
+          {korean ? "등기번호 일괄 배송조회" : "Bulk Mail Tracking"}
         </div>
         <div
           style={{
