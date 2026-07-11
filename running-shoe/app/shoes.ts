@@ -30,18 +30,20 @@ export type BrandKey =
   | "mizuno"
   | "on";
 
-export const BRANDS: { key: BrandKey; name: string }[] = [
-  { key: "nike", name: "나이키" },
-  { key: "adidas", name: "아디다스" },
-  { key: "asics", name: "아식스" },
-  { key: "newbalance", name: "뉴발란스" },
-  { key: "saucony", name: "사코니" },
-  { key: "puma", name: "푸마" },
-  { key: "hoka", name: "호카" },
-  { key: "brooks", name: "브룩스" },
-  { key: "mizuno", name: "미즈노" },
-  { key: "on", name: "온" },
-];
+// color: 실제 상품 사진이 없을 때 쓰는 브랜드 컬러 썸네일용 [시작색, 끝색] 그라데이션.
+export const BRANDS: { key: BrandKey; name: string; color: [string, string] }[] =
+  [
+    { key: "nike", name: "나이키", color: ["#4b5563", "#111827"] },
+    { key: "adidas", name: "아디다스", color: ["#1e293b", "#0b1220"] },
+    { key: "asics", name: "아식스", color: ["#1e40af", "#0b2a6b"] },
+    { key: "newbalance", name: "뉴발란스", color: ["#e11d48", "#9f1239"] },
+    { key: "saucony", name: "사코니", color: ["#ea580c", "#9a3412"] },
+    { key: "puma", name: "푸마", color: ["#525252", "#171717"] },
+    { key: "hoka", name: "호카", color: ["#0d9488", "#0f766e"] },
+    { key: "brooks", name: "브룩스", color: ["#4338ca", "#312e81"] },
+    { key: "mizuno", name: "미즈노", color: ["#0ea5e9", "#0369a1"] },
+    { key: "on", name: "온", color: ["#475569", "#1e293b"] },
+  ];
 
 export type TierKey =
   | "entry"
@@ -153,6 +155,9 @@ export type Shoe = {
   desc?: string;
   // 파트너스 딥링크. 비어 있으면 상품명 검색 링크로 대체.
   coupangUrl?: string;
+  // 실제 상품 이미지 URL. 있으면 사진으로, 없으면 브랜드 컬러 썸네일로 표시.
+  // (쿠팡 파트너스 오픈 API 승인 후 상품 이미지 URL을 넣으면 자동 교체됨)
+  image?: string;
 };
 
 // 등급별 신발 목록. [모델명, 뱃지목록] 튜플로 간결하게 정의하고 아래에서

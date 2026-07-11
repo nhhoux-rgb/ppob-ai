@@ -232,19 +232,76 @@ function FilterChip({
   );
 }
 
+// 러닝화 실루엣 아이콘 (저작권 없는 자체 SVG).
+function SneakerIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 48 48" fill="none" className={className} aria-hidden>
+      <path
+        d="M5 31c0-3 2.2-4.8 6-6l9.5-3.2c1.9-.6 3.9.1 4.9 1.8l3.1 5.2c.8 1.3 2.2 2.1 3.8 2.2l5.2.3c1.7.1 3 1.5 3 3.2V37c0 1.7-1.4 3-3 3H8c-1.7 0-3-1.3-3-3v-6Z"
+        fill="currentColor"
+      />
+      <path
+        d="M6 36.5h36"
+        stroke="rgba(0,0,0,.18)"
+        strokeWidth="2.4"
+        strokeLinecap="round"
+      />
+      <path
+        d="M22 23.5l2.6 3.4M25.5 22l2.6 3.4M29 21l2.4 3.2"
+        stroke="rgba(0,0,0,.16)"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+// 상품 썸네일. 실제 이미지 URL(shoe.image)이 있으면 사진을, 없으면 브랜드
+// 컬러 그라데이션 + 러닝화 실루엣으로 대체한다.
+function ShoeThumb({ shoe, className = "" }: { shoe: Shoe; className?: string }) {
+  const brand = BRAND_BY_KEY[shoe.brand];
+  if (shoe.image) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={shoe.image}
+        alt={`${brand.name} ${shoe.name}`}
+        loading="lazy"
+        className={`object-cover ${className}`}
+      />
+    );
+  }
+  return (
+    <span
+      aria-hidden
+      className={`flex items-center justify-center overflow-hidden ${className}`}
+      style={{
+        background: `linear-gradient(135deg, ${brand.color[0]}, ${brand.color[1]})`,
+      }}
+    >
+      <SneakerIcon className="h-[60%] w-[60%] text-white/95" />
+    </span>
+  );
+}
+
 function ShoeChip({ shoe, onClick }: { shoe: Shoe; onClick: () => void }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="group flex w-full items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2 py-1.5 text-left text-xs font-medium text-zinc-700 transition hover:border-indigo-300 hover:bg-indigo-50 active:scale-[0.98]"
+      className="group flex w-full items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-1.5 py-1.5 text-left text-xs font-medium text-zinc-700 transition hover:border-indigo-300 hover:bg-indigo-50 active:scale-[0.98]"
     >
-      <span className="flex shrink-0 gap-0.5">
-        {shoe.badges.map((b) => (
-          <span key={b} className={`h-2 w-2 rounded-full ${BADGE_DOT[b]}`} />
-        ))}
+      <span className="relative shrink-0">
+        <ShoeThumb shoe={shoe} className="h-7 w-7 rounded-md" />
+        {shoe.badges.length > 0 && (
+          <span className="absolute -right-1 -top-1 flex gap-0.5 rounded-full bg-white/95 px-0.5 py-px shadow-sm ring-1 ring-black/5">
+            {shoe.badges.map((b) => (
+              <span key={b} className={`h-1.5 w-1.5 rounded-full ${BADGE_DOT[b]}`} />
+            ))}
+          </span>
+        )}
       </span>
-      <span className="leading-tight group-hover:text-indigo-700">
+      <span className="min-w-0 leading-tight group-hover:text-indigo-700">
         {shoe.name}
       </span>
     </button>
@@ -264,8 +321,12 @@ function ShoeModal({ shoe, onClose }: { shoe: Shoe; onClose: () => void }) {
         className="w-full max-w-md rounded-t-3xl bg-white p-6 shadow-xl sm:rounded-3xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-start justify-between gap-3">
-          <div>
+        <div className="flex items-start gap-3">
+          <ShoeThumb
+            shoe={shoe}
+            className="h-16 w-16 shrink-0 rounded-2xl shadow-sm"
+          />
+          <div className="min-w-0 flex-1">
             <p className="text-xs font-semibold text-indigo-600">
               {brand.name} · {tier.name}
             </p>
