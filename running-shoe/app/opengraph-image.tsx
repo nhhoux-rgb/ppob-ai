@@ -42,11 +42,11 @@ export default async function OgImage() {
           fontFamily: korean ? "Pretendard" : "sans-serif",
         }}
       >
-        <div style={{ display: "flex", fontSize: 132, letterSpacing: -3 }}>
-          {korean ? "러닝화 계급도" : "RUNNING SHOES"}
+        <div style={{ display: "flex", fontSize: 140, letterSpacing: -3 }}>
+          {korean ? "러닝화 추천" : "RUNNING SHOES"}
         </div>
         <div style={{ display: "flex", marginTop: 16, fontSize: 46 }}>
-          {korean ? "브랜드별 러닝화 등급표" : "Running Shoe Tier Chart"}
+          {korean ? "나에게 맞는 러닝화 찾기" : "Find your running shoes"}
         </div>
         <div
           style={{
@@ -57,8 +57,8 @@ export default async function OgImage() {
           }}
         >
           {korean
-            ? "입문화부터 카본 레이싱까지 한눈에 · 참고가·구매 링크 제공"
-            : "From daily trainers to carbon racers"}
+            ? "목적·예산·브랜드로 추천 · 참고가·구매 링크 · 계급도까지"
+            : "Personalized picks + tier chart"}
         </div>
       </div>
     ),

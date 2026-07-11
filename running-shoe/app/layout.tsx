@@ -5,17 +5,17 @@ import { siteUrl } from "./site-url";
 import JsonLd from "./json-ld";
 import "./globals.css";
 
-// 검색엔진용 구조화 데이터 — 이 사이트가 "러닝화 계급도(등급표)"임을 명시.
+// 검색엔진용 구조화 데이터 — 이 사이트가 "러닝화 추천 도구"임을 명시.
 const APP_JSON_LD = {
   "@context": "https://schema.org",
   "@type": "WebApplication",
-  name: "러닝화 계급도",
+  name: "러닝화 추천",
   url: siteUrl,
   applicationCategory: "SportsApplication",
   operatingSystem: "All",
   inLanguage: "ko-KR",
   description:
-    "나이키·아디다스·아식스·뉴발란스·호카 등 브랜드별 러닝화를 입문화·안정화·카본 레이싱까지 등급으로 한눈에 정리한 러닝화 계급도.",
+    "나이·몸무게·목적·예산·선호 브랜드를 입력하면 나에게 맞는 러닝화를 추천하고, 브랜드별 러닝화 계급도까지 제공하는 무료 러닝화 추천 서비스.",
   offers: { "@type": "Offer", price: "0", priceCurrency: "KRW" },
 };
 
@@ -31,36 +31,36 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "러닝화 계급도 · 브랜드별 러닝화 등급표 (최신)",
+  title: "러닝화 추천 · 나에게 맞는 러닝화 찾기 (계급도 포함)",
   description:
-    "나이키·아디다스·아식스·뉴발란스·사코니·푸마·호카·브룩스·미즈노·온 러닝화를 입문화·맥스쿠션·안정화·카본 레이싱까지 등급으로 정리. 클릭하면 참고가·특징·구매 링크를 볼 수 있어요.",
-  applicationName: "러닝화 계급도",
+    "나이·몸무게·목적(데일리·트레이닝·대회)·예산·선호 브랜드를 입력하면 나에게 맞는 러닝화를 추천해 드려요. 참고가·구매 링크와 브랜드별 러닝화 계급도까지 한 번에.",
+  applicationName: "러닝화 추천",
   alternates: { canonical: "/" },
   keywords: [
-    "러닝화 계급도",
     "러닝화 추천",
-    "러닝화 등급표",
-    "입문 러닝화",
-    "카본화 추천",
+    "러닝화 계급도",
+    "입문 러닝화 추천",
     "마라톤화 추천",
+    "카본화 추천",
+    "10k 러닝화",
     "안정화 러닝화",
-    "나이키 러닝화",
-    "아식스 러닝화",
-    "호카 러닝화",
+    "러닝화 등급표",
+    "체중별 러닝화",
+    "러닝화 고르는 법",
   ],
   openGraph: {
     type: "website",
-    siteName: "러닝화 계급도",
-    title: "러닝화 계급도 · 브랜드별 러닝화 등급표 (최신)",
+    siteName: "러닝화 추천",
+    title: "러닝화 추천 · 나에게 맞는 러닝화 찾기",
     description:
-      "브랜드별 러닝화를 입문화·안정화·카본 레이싱까지 등급으로 한눈에. 클릭하면 참고가·특징·구매 링크까지.",
+      "몇 가지만 고르면 나에게 맞는 러닝화를 추천. 참고가·구매 링크와 브랜드별 계급도까지.",
     url: "/",
     locale: "ko_KR",
   },
   twitter: {
     card: "summary_large_image",
-    title: "러닝화 계급도 · 브랜드별 러닝화 등급표",
-    description: "브랜드별 러닝화를 등급으로 한눈에. 클릭하면 참고가·특징·구매 링크까지.",
+    title: "러닝화 추천 · 나에게 맞는 러닝화 찾기",
+    description: "몇 가지만 고르면 나에게 맞는 러닝화를 추천해 드려요.",
   },
   // AdSense 계정 메타. (같은 AdSense 계정을 사용)
   other: {

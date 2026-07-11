@@ -2,7 +2,8 @@ import Link from "next/link";
 import SharePageButton from "./share-page-button";
 
 const LINKS = [
-  { href: "/", label: "홈" },
+  { href: "/", label: "러닝화 추천" },
+  { href: "/tier", label: "러닝화 계급도" },
   { href: "/how-to-use", label: "이용 방법" },
   { href: "/faq", label: "자주 묻는 질문" },
   { href: "/privacy", label: "개인정보처리방침" },

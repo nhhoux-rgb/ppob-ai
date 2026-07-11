@@ -70,6 +70,8 @@ export const TIERS: {
   group: GroupKey;
   name: string;
   priceBand: string;
+  // 예산 매칭용 대표 가격(원, 대략 중앙값).
+  price: number;
   desc: string;
 }[] = [
   {
@@ -77,6 +79,7 @@ export const TIERS: {
     group: "daily",
     name: "입문화",
     priceBand: "약 13~16만 원대",
+    price: 145000,
     desc: "입문자·데일리 조깅에 무난한 쿠션과 내구성을 갖춘 기본 데일리 트레이너.",
   },
   {
@@ -84,6 +87,7 @@ export const TIERS: {
     group: "daily",
     name: "맥스 쿠션화",
     priceBand: "약 17~23만 원대",
+    price: 200000,
     desc: "두꺼운 미드솔로 장거리·회복주에서 발을 푹신하게 받쳐주는 맥스 쿠션화.",
   },
   {
@@ -91,6 +95,7 @@ export const TIERS: {
     group: "daily",
     name: "안정화",
     priceBand: "약 15~19만 원대",
+    price: 170000,
     desc: "과도한 발 안쪽 쏠림(오버프로네이션)을 잡아주는 안정화 구조의 데일리화.",
   },
   {
@@ -98,6 +103,7 @@ export const TIERS: {
     group: "daily",
     name: "올라운더",
     priceBand: "약 15~19만 원대",
+    price: 170000,
     desc: "조깅부터 템포런까지 두루 소화하는 균형 잡힌 올라운드 데일리화.",
   },
   {
@@ -105,6 +111,7 @@ export const TIERS: {
     group: "daily",
     name: "경량 트레이너",
     priceBand: "약 11~15만 원대",
+    price: 130000,
     desc: "가벼운 무게로 스피드 훈련·인터벌에 적합한 경량 트레이너.",
   },
   {
@@ -112,6 +119,7 @@ export const TIERS: {
     group: "superTrainer",
     name: "논 플레이트",
     priceBand: "약 16~21만 원대",
+    price: 185000,
     desc: "플레이트 없이 반발 폼만으로 경쾌한 추진력을 내는 슈퍼 트레이너.",
   },
   {
@@ -119,6 +127,7 @@ export const TIERS: {
     group: "superTrainer",
     name: "라이트 플레이트",
     priceBand: "약 19~24만 원대",
+    price: 215000,
     desc: "부드러운 플레이트로 데일리와 템포런을 모두 커버하는 라이트 플레이트화.",
   },
   {
@@ -126,6 +135,7 @@ export const TIERS: {
     group: "superTrainer",
     name: "카본 플레이트",
     priceBand: "약 23~28만 원대",
+    price: 255000,
     desc: "카본 플레이트를 넣어 훈련용으로도 강한 반발을 주는 슈퍼 트레이너.",
   },
   {
@@ -133,6 +143,7 @@ export const TIERS: {
     group: "racing",
     name: "중거리",
     priceBand: "약 22~30만 원대",
+    price: 260000,
     desc: "5~10km 등 중거리 레이스에 맞춘 경량 카본 레이싱화.",
   },
   {
@@ -140,6 +151,7 @@ export const TIERS: {
     group: "racing",
     name: "장거리",
     priceBand: "약 28~40만 원대",
+    price: 340000,
     desc: "하프·풀 마라톤 기록 단축을 위한 최상위 카본 레이싱화.",
   },
 ];
@@ -304,6 +316,11 @@ export function coupangLink(shoe: Shoe): string {
 
 export function shoePrice(shoe: Shoe): string {
   return shoe.priceBand ?? TIER_BY_KEY[shoe.tier].priceBand;
+}
+
+// 예산 매칭용 숫자 가격(원). 등급 대표 가격을 사용.
+export function shoePriceValue(shoe: Shoe): number {
+  return TIER_BY_KEY[shoe.tier].price;
 }
 
 export function shoeDesc(shoe: Shoe): string {
