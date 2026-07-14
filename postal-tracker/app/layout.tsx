@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { siteUrl } from "./site-url";
+import KakaoChatButton from "./kakao-chat-button";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -112,6 +113,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         {children}
+        <KakaoChatButton />
         <Analytics />
         {/* 구조화 데이터 */}
         <script
