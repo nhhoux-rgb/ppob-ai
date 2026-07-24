@@ -117,7 +117,8 @@ export async function POST(req: Request) {
       tools: [
         {
           type: "image_generation",
-          model: "gpt-image-1.5",
+          // 최신 이미지 모델. 인증 후 사용 가능. 계정에 미개방이면 gpt-image-1.5로 내리면 됨.
+          model: "gpt-image-2",
           quality: q,
           size,
           input_fidelity: "high", // 참조 건물을 알아볼 수 있게 반영
