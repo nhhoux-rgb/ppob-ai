@@ -93,7 +93,9 @@ export async function POST(req: Request) {
       );
     }
 
-    const apiKey = process.env.GEMINI_API_KEY;
+    // 환경변수 이름은 대소문자를 구분한다. 관례(GEMINI_API_KEY)와
+    // 사용자가 넣은 표기(Gemini_API_Key) 둘 다 허용한다.
+    const apiKey = process.env.GEMINI_API_KEY || process.env.Gemini_API_Key;
     if (!apiKey) {
       // 진단: OPENAI 키는 이미 설정돼 있으므로, 그건 보이는데 GEMINI만 안 보이면
       // → GEMINI 키가 ppob-ai 프로젝트의 Preview 환경에 없거나 이름이 틀린 것.
