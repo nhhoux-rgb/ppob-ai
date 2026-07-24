@@ -95,8 +95,13 @@ export async function POST(req: Request) {
 
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
+      // 진단: OPENAI 키는 이미 설정돼 있으므로, 그건 보이는데 GEMINI만 안 보이면
+      // → GEMINI 키가 ppob-ai 프로젝트의 Preview 환경에 없거나 이름이 틀린 것.
+      const openaiSeen = process.env.OPENAI_API_KEY ? "present" : "absent";
       return Response.json(
-        { error: "GEMINI_API_KEY가 설정되지 않았습니다." },
+        {
+          error: `GEMINI_API_KEY 미설정 (진단: GEMINI=absent, OPENAI=${openaiSeen}). ppob-ai 프로젝트의 Preview 환경변수를 확인하세요.`,
+        },
         { status: 500 }
       );
     }
