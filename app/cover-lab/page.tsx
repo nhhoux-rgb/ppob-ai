@@ -12,11 +12,6 @@ const RATIOS = [
   { key: "a4-portrait", label: "A4 세로" },
 ] as const;
 
-const QUALITIES = [
-  { key: "high", label: "고품질(권장)" },
-  { key: "medium", label: "보통(빠름·저렴)" },
-] as const;
-
 // 입력칸 아래 가이드 — 누르면 입력칸에 추가된다.
 const EXAMPLES = [
   "밝고 깨끗한 화이트 배경",
@@ -36,7 +31,6 @@ export default function CoverLab() {
   const [error, setError] = useState("");
 
   const [ratio, setRatio] = useState<string>("a4-landscape");
-  const [quality, setQuality] = useState<string>("high");
   const [userPrompt, setUserPrompt] = useState<string>("");
 
   const fileRef = useRef<HTMLInputElement>(null);
@@ -67,7 +61,7 @@ export default function CoverLab() {
       const res = await fetch("/api/cover", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageBase64: image, ratio, quality, userPrompt }),
+        body: JSON.stringify({ imageBase64: image, ratio, userPrompt }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "생성 실패");
@@ -140,13 +134,6 @@ export default function CoverLab() {
             {RATIOS.map((r) => (
               <Chip key={r.key} active={ratio === r.key} onClick={() => setRatio(r.key)}>
                 {r.label}
-              </Chip>
-            ))}
-          </OptionRow>
-          <OptionRow label="품질">
-            {QUALITIES.map((qq) => (
-              <Chip key={qq.key} active={quality === qq.key} onClick={() => setQuality(qq.key)}>
-                {qq.label}
               </Chip>
             ))}
           </OptionRow>
