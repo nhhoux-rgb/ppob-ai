@@ -32,23 +32,23 @@ const NO_TEXT_CLAUSE =
 const MAX_USER_PROMPT = 600;
 
 // 사용자는 사진만 넣으면 되고, 원하면 자유 텍스트로 느낌을 지시한다.
+// 하이브리드(B안): AI는 "배경만" 만든다. 건물은 클라이언트가 원본 그대로 합성한다.
 function buildPrompt(userPrompt: string): string {
   const base = [
-    "Turn the attached architectural rendering into a premium real-estate report COVER background — a clean PowerPoint title-slide background.",
-    "Keep the building recognizable and photorealistic, and EXTEND its real surroundings (ground, sky, neighbouring context) naturally so it sits in ONE continuous, believable scene.",
-    "Do NOT paste the building as a cut-out: no hard cut edges, no white outline, no drop shadow or glow halo, no photo frame or box, no sticker look. It must look photographed in place, not composited.",
-    "Compose it like a professional designer: the building occupies part of the frame while a smooth, complementary gradient/atmosphere fills the rest, leaving a calm, uncluttered area of open space for a title to be added later. Polished and intentional — not a plain photo and not a muddy foggy blur.",
-    "CRITICAL: this is a clean image. Absolutely NO watermark, NO logo, NO stamp, NO semi-transparent text or house/building icon overlay, NO real-estate agency mark of any kind. Such marks must NEVER appear anywhere.",
-    "By default use a clean, bright, refined professional color scheme, unless the user's request below asks for something different.",
+    "Create an abstract, premium BACKGROUND image for a real-estate report cover.",
+    "IMPORTANT: do NOT draw any building, structure, city, street, tree, car or object. Output ONLY an elegant abstract backdrop — smooth gradients, soft light, gentle depth and subtle tasteful graphic texture.",
+    "Use the attached image ONLY as inspiration for the color palette and mood; never reproduce any building from it.",
+    "It should look like a sophisticated corporate report background that a project photo and a title will later be placed on top of. Keep it calm and uncluttered.",
+    "By default use a clean, refined professional color scheme, unless the user's request below asks for something different.",
   ];
   if (userPrompt) {
     base.push(
-      `User's requested look/feel (follow it, but never add any text, letters, logos or watermarks): ${userPrompt}`
+      `User's requested color/mood (follow it, but never add any building, text, logo or watermark): ${userPrompt}`
     );
   }
   base.push(NO_TEXT_CLAUSE);
   base.push(
-    "Final check: a polished, completely text-free cover background — no letters, numbers, logos or watermarks anywhere — with the building blended naturally into the scene, never a floating cut-out."
+    "Output: a clean ABSTRACT BACKGROUND only — absolutely no buildings, no objects, no text, no letters, no numbers, no logos and no watermarks anywhere."
   );
   return base.join(" ");
 }
