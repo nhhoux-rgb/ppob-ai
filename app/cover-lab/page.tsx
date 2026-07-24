@@ -15,6 +15,8 @@ type Opts = {
   lineColor: string; // 구분선 색 (#hex)
   lineGrad: boolean; // 구분선 그라데이션
   shape: string; // 배경 도형 패턴
+  shapePos: string; // 도형 배치 위치
+  gradDir: string; // 배경 그라데이션 방향
 };
 
 const RATIOS = [
@@ -46,8 +48,28 @@ const TEMPLATES = [
 const SHAPES = [
   { key: "none", label: "없음" },
   { key: "circle", label: "원" },
+  { key: "rings", label: "다중원" },
+  { key: "dots", label: "점망" },
   { key: "band", label: "밴드" },
   { key: "triangle", label: "삼각" },
+  { key: "waves", label: "물결" },
+  { key: "arc", label: "곡선" },
+] as const;
+
+const SHAPE_POS = [
+  { key: "tl", label: "좌상" },
+  { key: "tr", label: "우상" },
+  { key: "bl", label: "좌하" },
+  { key: "br", label: "우하" },
+  { key: "center", label: "중앙" },
+] as const;
+
+const GRAD_DIRS = [
+  { key: "diagonal", label: "대각" },
+  { key: "diagonal2", label: "반대각" },
+  { key: "vertical", label: "세로" },
+  { key: "horizontal", label: "가로" },
+  { key: "radial", label: "방사" },
 ] as const;
 
 function loadImage(src: string): Promise<HTMLImageElement> {
@@ -155,41 +177,115 @@ function accentTick(ctx: CanvasRenderingContext2D, x: number, y: number, w: numb
   ctx.fillRect(x, y, w, Math.max(3, w * 0.03));
 }
 
-// 배경 장식 도형 (그라데이션) — 주로 좌상단 제목 영역에 은은하게
-function drawShape(ctx: CanvasRenderingContext2D, W: number, H: number, shape: string, colorHex: string) {
+const ANCHORS: Record<string, [number, number]> = {
+  tl: [0.16, 0.2],
+  tr: [0.84, 0.2],
+  bl: [0.16, 0.8],
+  br: [0.84, 0.8],
+  center: [0.5, 0.5],
+};
+
+// 배경 장식 도형 (그라데이션) — 지정 위치에 은은하게
+function drawShape(
+  ctx: CanvasRenderingContext2D,
+  W: number,
+  H: number,
+  shape: string,
+  colorHex: string,
+  pos: string
+) {
   if (shape === "none") return;
   const [r, g, b] = hexToRgb(colorHex);
+  const rgbaS = (a: number) => `rgba(${r},${g},${b},${a})`;
+  const [ax, ay] = ANCHORS[pos] ?? ANCHORS.tl;
+  const cx = W * ax;
+  const cy = H * ay;
+  const R = Math.min(W, H) * 0.55;
   ctx.save();
+
   if (shape === "circle") {
-    const grd = ctx.createRadialGradient(W * 0.18, H * 0.22, 0, W * 0.18, H * 0.22, W * 0.42);
-    grd.addColorStop(0, `rgba(${r},${g},${b},0.3)`);
-    grd.addColorStop(1, `rgba(${r},${g},${b},0)`);
+    const grd = ctx.createRadialGradient(cx, cy, 0, cx, cy, R);
+    grd.addColorStop(0, rgbaS(0.3));
+    grd.addColorStop(1, rgbaS(0));
     ctx.fillStyle = grd;
     ctx.beginPath();
-    ctx.arc(W * 0.18, H * 0.22, W * 0.42, 0, Math.PI * 2);
+    ctx.arc(cx, cy, R, 0, Math.PI * 2);
     ctx.fill();
+  } else if (shape === "rings") {
+    ctx.lineWidth = Math.max(2, W / 500);
+    for (let i = 1; i <= 5; i++) {
+      ctx.strokeStyle = rgbaS(0.22 - i * 0.03);
+      ctx.beginPath();
+      ctx.arc(cx, cy, R * (i / 6), 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  } else if (shape === "dots") {
+    const step = W * 0.028;
+    const cols = 10;
+    const rows = 10;
+    const ox = cx - (cols * step) / 2;
+    const oy = cy - (rows * step) / 2;
+    for (let yi = 0; yi < rows; yi++) {
+      for (let xi = 0; xi < cols; xi++) {
+        const dx = xi - cols / 2;
+        const dy = yi - rows / 2;
+        const dist = Math.sqrt(dx * dx + dy * dy) / (cols / 2);
+        const a = Math.max(0, 0.28 * (1 - dist));
+        if (a <= 0) continue;
+        ctx.fillStyle = rgbaS(a);
+        ctx.beginPath();
+        ctx.arc(ox + xi * step, oy + yi * step, Math.max(1.5, W / 700), 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
   } else if (shape === "band") {
-    ctx.translate(W * 0.3, H * 0.28);
+    ctx.translate(cx, cy);
     ctx.rotate(-0.4);
-    const bw = W * 1.1;
+    const bw = W * 1.3;
     const bh = H * 0.16;
     const grd = ctx.createLinearGradient(-bw / 2, 0, bw / 2, 0);
-    grd.addColorStop(0, `rgba(${r},${g},${b},0)`);
-    grd.addColorStop(0.5, `rgba(${r},${g},${b},0.22)`);
-    grd.addColorStop(1, `rgba(${r},${g},${b},0)`);
+    grd.addColorStop(0, rgbaS(0));
+    grd.addColorStop(0.5, rgbaS(0.22));
+    grd.addColorStop(1, rgbaS(0));
     ctx.fillStyle = grd;
     ctx.fillRect(-bw / 2, -bh / 2, bw, bh);
   } else if (shape === "triangle") {
-    const grd = ctx.createLinearGradient(0, 0, W * 0.5, H * 0.5);
-    grd.addColorStop(0, `rgba(${r},${g},${b},0.32)`);
-    grd.addColorStop(1, `rgba(${r},${g},${b},0)`);
+    // 앵커에서 가장 가까운 모서리 기준 삼각형
+    const cornerX = ax < 0.5 ? 0 : W;
+    const cornerY = ay < 0.5 ? 0 : H;
+    const sx = ax < 0.5 ? W * 0.5 : -W * 0.5;
+    const sy = ay < 0.5 ? H * 0.62 : -H * 0.62;
+    const grd = ctx.createLinearGradient(cornerX, cornerY, cornerX + sx, cornerY + sy);
+    grd.addColorStop(0, rgbaS(0.32));
+    grd.addColorStop(1, rgbaS(0));
     ctx.fillStyle = grd;
     ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.lineTo(W * 0.48, 0);
-    ctx.lineTo(0, H * 0.6);
+    ctx.moveTo(cornerX, cornerY);
+    ctx.lineTo(cornerX + sx, cornerY);
+    ctx.lineTo(cornerX, cornerY + sy);
     ctx.closePath();
     ctx.fill();
+  } else if (shape === "waves") {
+    ctx.lineWidth = Math.max(1.5, W / 700);
+    for (let i = 0; i < 8; i++) {
+      ctx.strokeStyle = rgbaS(0.18 - i * 0.015);
+      ctx.beginPath();
+      const baseY = cy - H * 0.18 + i * (H * 0.045);
+      for (let px = cx - W * 0.4; px <= cx + W * 0.4; px += W * 0.02) {
+        const yy = baseY + Math.sin((px / W) * Math.PI * 6 + i * 0.4) * (H * 0.022);
+        if (px === cx - W * 0.4) ctx.moveTo(px, yy);
+        else ctx.lineTo(px, yy);
+      }
+      ctx.stroke();
+    }
+  } else if (shape === "arc") {
+    ctx.lineWidth = Math.max(2, W / 450);
+    for (let i = 0; i < 4; i++) {
+      ctx.strokeStyle = rgbaS(0.2 - i * 0.04);
+      ctx.beginPath();
+      ctx.arc(cx, cy, R * (0.5 + i * 0.18), Math.PI * 0.1, Math.PI * 0.9);
+      ctx.stroke();
+    }
   }
   ctx.restore();
 }
@@ -203,12 +299,23 @@ function render(
   c: Colors,
   o: Opts
 ) {
-  const { fx, fy, ov, zoom, panel, lineColor, lineGrad, shape } = o;
+  const { fx, fy, ov, zoom, panel, lineColor, lineGrad, shape, shapePos, gradDir } = o;
   const tline = Math.max(3, W / 300);
   const bgGrad = () => {
-    const g = ctx.createLinearGradient(0, 0, W, H);
-    g.addColorStop(0, rgbStr(c.deep));
-    g.addColorStop(1, rgbStr(lerp(c.light, c.deep, ov * 0.6)));
+    const c0 = rgbStr(c.deep);
+    const c1 = rgbStr(lerp(c.light, c.deep, ov * 0.6));
+    let g: CanvasGradient;
+    if (gradDir === "vertical") g = ctx.createLinearGradient(0, 0, 0, H);
+    else if (gradDir === "horizontal") g = ctx.createLinearGradient(0, 0, W, 0);
+    else if (gradDir === "diagonal2") g = ctx.createLinearGradient(W, 0, 0, H);
+    else if (gradDir === "radial") {
+      g = ctx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, Math.max(W, H) * 0.7);
+      g.addColorStop(0, c1); // 방사형은 가운데를 밝게
+      g.addColorStop(1, c0);
+      return g;
+    } else g = ctx.createLinearGradient(0, 0, W, H);
+    g.addColorStop(0, c0);
+    g.addColorStop(1, c1);
     return g;
   };
 
@@ -226,7 +333,7 @@ function render(
     gy.addColorStop(1, rgba(c.deep, ov * 0.6));
     ctx.fillStyle = gy;
     ctx.fillRect(0, 0, W, H);
-    drawShape(ctx, W, H, shape, lineColor);
+    drawShape(ctx, W, H, shape, lineColor, shapePos);
     accentTick(ctx, W * 0.07, H * 0.2, W * 0.12, lineColor);
     return;
   }
@@ -234,7 +341,7 @@ function render(
   if (key === "sidebar") {
     ctx.fillStyle = bgGrad();
     ctx.fillRect(0, 0, W, H);
-    drawShape(ctx, W, H, shape, lineColor);
+    drawShape(ctx, W, H, shape, lineColor, shapePos);
     const pw = Math.round(W * (0.45 + panel * 0.4));
     const px = W - pw;
     drawCover(ctx, img, px, 0, pw, H, fx, fy, zoom);
@@ -246,7 +353,7 @@ function render(
   if (key === "bottom") {
     ctx.fillStyle = bgGrad();
     ctx.fillRect(0, 0, W, H);
-    drawShape(ctx, W, H, shape, lineColor);
+    drawShape(ctx, W, H, shape, lineColor, shapePos);
     const ph = Math.round(H * (0.45 + panel * 0.4));
     const py = H - ph;
     drawCover(ctx, img, 0, py, W, ph, fx, fy, zoom);
@@ -258,7 +365,7 @@ function render(
   if (key === "diagonal") {
     ctx.fillStyle = bgGrad();
     ctx.fillRect(0, 0, W, H);
-    drawShape(ctx, W, H, shape, lineColor);
+    drawShape(ctx, W, H, shape, lineColor, shapePos);
     const topX = W * (0.6 - panel * 0.3);
     const botX = topX - W * 0.14;
     ctx.save();
@@ -279,7 +386,7 @@ function render(
   if (key === "card") {
     ctx.fillStyle = bgGrad();
     ctx.fillRect(0, 0, W, H);
-    drawShape(ctx, W, H, shape, lineColor);
+    drawShape(ctx, W, H, shape, lineColor, shapePos);
     const m = Math.round(W * (0.12 - panel * 0.07));
     const cardH = Math.round(H * (0.45 + panel * 0.3));
     const cardY = H - cardH - m;
@@ -312,7 +419,7 @@ function render(
     const barH = Math.round(H * (0.15 + panel * 0.22));
     ctx.fillStyle = rgba(c.deep, 0.55 + ov * 0.43);
     ctx.fillRect(0, 0, W, barH);
-    drawShape(ctx, W, barH * 2, shape, lineColor);
+    drawShape(ctx, W, barH * 2, shape, lineColor, shapePos);
     divider(ctx, 0, barH, W, barH, tline, lineColor, lineGrad);
     accentTick(ctx, W * 0.07, barH * 0.42, W * 0.12, lineColor);
     return;
@@ -336,6 +443,11 @@ export default function CoverLab() {
   const [lineColor, setLineColor] = useState("#c9a24a");
   const [lineGrad, setLineGrad] = useState(false);
   const [shape, setShape] = useState("none");
+  const [shapePos, setShapePos] = useState("tl");
+  const [gradDir, setGradDir] = useState("diagonal");
+
+  // 드래그로 사진 위치 조정
+  const dragRef = useRef<{ on: boolean; x: number; y: number }>({ on: false, x: 0, y: 0 });
 
   const ratio = RATIOS.find((r) => r.key === ratioKey) ?? RATIOS[0];
 
@@ -369,8 +481,10 @@ export default function CoverLab() {
       lineColor,
       lineGrad,
       shape,
+      shapePos,
+      gradDir,
     });
-  }, [ratio, template, tone, posX, posY, gradPct, zoomPct, panelPct, lineColor, lineGrad, shape]);
+  }, [ratio, template, tone, posX, posY, gradPct, zoomPct, panelPct, lineColor, lineGrad, shape, shapePos, gradDir]);
 
   useEffect(() => {
     draw();
@@ -387,6 +501,26 @@ export default function CoverLab() {
     };
     reader.readAsDataURL(f);
     e.target.value = "";
+  }
+
+  function onPointerDown(e: React.PointerEvent<HTMLCanvasElement>) {
+    if (!hasImage) return;
+    dragRef.current = { on: true, x: e.clientX, y: e.clientY };
+    e.currentTarget.setPointerCapture(e.pointerId);
+  }
+  function onPointerMove(e: React.PointerEvent<HTMLCanvasElement>) {
+    const d = dragRef.current;
+    if (!d.on) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const dfx = ((e.clientX - d.x) / rect.width) * 100;
+    const dfy = ((e.clientY - d.y) / rect.height) * 100;
+    // 사진을 끌면 그 방향으로 이동 → 초점은 반대로
+    setPosX((p) => Math.max(0, Math.min(100, p - dfx)));
+    setPosY((p) => Math.max(0, Math.min(100, p - dfy)));
+    dragRef.current = { on: true, x: e.clientX, y: e.clientY };
+  }
+  function onPointerUp() {
+    dragRef.current.on = false;
   }
 
   function download() {
@@ -423,8 +557,19 @@ export default function CoverLab() {
               onChange={handleImage}
             />
             <div className="overflow-hidden rounded-lg border bg-white">
-              <canvas ref={canvasRef} className="block w-full" />
+              <canvas
+                ref={canvasRef}
+                onPointerDown={onPointerDown}
+                onPointerMove={onPointerMove}
+                onPointerUp={onPointerUp}
+                className={`block w-full touch-none ${hasImage ? "cursor-grab active:cursor-grabbing" : ""}`}
+              />
             </div>
+            {hasImage && (
+              <p className="mt-1.5 text-xs text-zinc-400">
+                사진을 드래그해서 위치를 조정하세요.
+              </p>
+            )}
             <button
               onClick={download}
               disabled={!hasImage}
@@ -457,11 +602,16 @@ export default function CoverLab() {
               ))}
             </Row>
 
-            <Slider label={`사진 가로 위치 (${posX})`} value={posX} onChange={setPosX} />
-            <Slider label={`사진 세로 위치 (${posY})`} value={posY} onChange={setPosY} />
             <Slider label={`사진 크기 (${zoomPct}%)`} min={100} max={250} value={zoomPct} onChange={setZoomPct} />
             <Slider label={`프레임 크기 (${panelPct})`} min={30} max={80} value={panelPct} onChange={setPanelPct} />
             <Slider label={`그라데이션 강도 (${gradPct})`} value={gradPct} onChange={setGradPct} />
+            <Row label="그라데이션 방향">
+              {GRAD_DIRS.map((d) => (
+                <Chip key={d.key} active={gradDir === d.key} onClick={() => setGradDir(d.key)}>
+                  {d.label}
+                </Chip>
+              ))}
+            </Row>
 
             <Row label="구분선 색상">
               <input
@@ -487,6 +637,15 @@ export default function CoverLab() {
                 </Chip>
               ))}
             </Row>
+            {shape !== "none" && (
+              <Row label="도형 위치">
+                {SHAPE_POS.map((p) => (
+                  <Chip key={p.key} active={shapePos === p.key} onClick={() => setShapePos(p.key)}>
+                    {p.label}
+                  </Chip>
+                ))}
+              </Row>
+            )}
 
             <p className="text-xs text-zinc-400">
               어두운/빈 영역에 PPT에서 제목을 넣으세요. 액센트 선이 제목 시작 위치 가이드입니다.
