@@ -2,10 +2,14 @@
 
 import { useCallback, useEffect, useRef, useState, type ChangeEvent } from "react";
 
-// 코드 합성 표지 (AI 미사용):
-//  - 배경 = 깔끔한 그라데이션 (컬러톤 선택 또는 사진에서 자동 추출)
-//  - 원본 렌더 = 그대로 사진 패널로 배치 (선명도 100%, 글자/워터마크 0)
-//  - 나머지는 제목 넣을 여백. 전부 브라우저에서 즉시, 무료, 안정적.
+// 표지 템플릿 방식 (AI 미사용):
+//  - 프로가 디자인한 표지 레이아웃 여러 개를 코드로 그린다.
+//  - 사용자가 템플릿을 고르면 원본 렌더가 알맞게 슬롯인된다.
+//  - 배경/구도/제목여백은 템플릿이 정하고, 색은 톤(또는 사진 자동추출)에서.
+//  - 전부 브라우저에서 즉시, 무료, 안정적, 글자/워터마크 0.
+
+type RGB = [number, number, number];
+type Colors = { deep: RGB; light: RGB; accent: RGB };
 
 const RATIOS = [
   { key: "a4-landscape", label: "A4 가로", w: 1600, h: 1131 },
@@ -13,23 +17,25 @@ const RATIOS = [
   { key: "a4-portrait", label: "A4 세로", w: 1131, h: 1600 },
 ] as const;
 
-const LAYOUTS = [
-  { key: "right", label: "사진 오른쪽" },
-  { key: "left", label: "사진 왼쪽" },
-  { key: "bottom", label: "사진 아래" },
-] as const;
-
-// [진한색, 밝은색, 액센트색]
-const TONES: Record<string, [string, string, string]> = {
-  Navy: ["#0b2545", "#1c4a80", "#c9a24a"],
-  Blue: ["#0f4c8a", "#3f7fc0", "#ffffff"],
-  White: ["#dbe3ef", "#ffffff", "#1e3a8a"],
-  Black: ["#0e0e10", "#33373f", "#c9a24a"],
-  Gold: ["#2a1e08", "#b98b34", "#f4e3b8"],
-  Green: ["#0e3b30", "#2f6f5c", "#cfe8dd"],
-  Gray: ["#2f343b", "#5b626c", "#d3d9e0"],
+const TONES: Record<string, Colors> = {
+  Navy: { deep: [11, 37, 69], light: [28, 74, 128], accent: [201, 162, 74] },
+  Blue: { deep: [15, 76, 138], light: [63, 127, 192], accent: [255, 255, 255] },
+  White: { deep: [219, 227, 239], light: [255, 255, 255], accent: [30, 58, 138] },
+  Black: { deep: [14, 14, 16], light: [51, 55, 63], accent: [201, 162, 74] },
+  Gold: { deep: [42, 30, 8], light: [185, 139, 52], accent: [244, 227, 184] },
+  Green: { deep: [14, 59, 48], light: [47, 111, 92], accent: [207, 232, 221] },
+  Gray: { deep: [47, 52, 59], light: [91, 98, 108], accent: [211, 217, 224] },
 };
 const TONE_KEYS = ["Auto", ...Object.keys(TONES)];
+
+const TEMPLATES = [
+  { key: "fullbleed", label: "풀이미지" },
+  { key: "sidebar", label: "사이드바" },
+  { key: "bottom", label: "하단 밴드" },
+  { key: "diagonal", label: "대각 분할" },
+  { key: "card", label: "프레임 카드" },
+  { key: "topbar", label: "상단 타이틀바" },
+] as const;
 
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -39,6 +45,12 @@ function loadImage(src: string): Promise<HTMLImageElement> {
     img.src = src;
   });
 }
+
+function clamp(n: number) {
+  return Math.max(0, Math.min(255, Math.round(n)));
+}
+const rgbStr = (c: RGB) => `rgb(${clamp(c[0])},${clamp(c[1])},${clamp(c[2])})`;
+const rgba = (c: RGB, a: number) => `rgba(${clamp(c[0])},${clamp(c[1])},${clamp(c[2])},${a})`;
 
 function drawCover(
   ctx: CanvasRenderingContext2D,
@@ -56,15 +68,7 @@ function drawCover(
   ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
 }
 
-function clamp(n: number) {
-  return Math.max(0, Math.min(255, Math.round(n)));
-}
-function rgb(r: number, g: number, b: number) {
-  return `rgb(${clamp(r)}, ${clamp(g)}, ${clamp(b)})`;
-}
-
-// 사진에서 평균색을 뽑아 [진한, 밝은, 액센트] 그라데이션 색을 만든다.
-function autoTone(img: HTMLImageElement): [string, string, string] {
+function autoTone(img: HTMLImageElement): Colors {
   const c = document.createElement("canvas");
   c.width = 16;
   c.height = 16;
@@ -85,10 +89,144 @@ function autoTone(img: HTMLImageElement): [string, string, string] {
   r /= n;
   g /= n;
   b /= n;
-  const deep = rgb(r * 0.45, g * 0.45, b * 0.45);
-  const light = rgb(r * 0.75 + 90, g * 0.75 + 90, b * 0.75 + 90);
-  const accent = rgb(r * 0.6 + 130, g * 0.6 + 130, b * 0.6 + 130);
-  return [deep, light, accent];
+  return {
+    deep: [r * 0.4, g * 0.4, b * 0.4],
+    light: [r * 0.7 + 70, g * 0.7 + 70, b * 0.7 + 70],
+    accent: [r * 0.5 + 150, g * 0.5 + 150, b * 0.5 + 150],
+  };
+}
+
+// 제목 자리 힌트용 짧은 액센트 선 (장식)
+function accentTick(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, col: RGB) {
+  ctx.fillStyle = rgbStr(col);
+  ctx.fillRect(x, y, w, Math.max(3, w * 0.03));
+}
+
+// ── 템플릿별 그리기 ──────────────────────────────────────────────
+function render(
+  key: string,
+  ctx: CanvasRenderingContext2D,
+  W: number,
+  H: number,
+  img: HTMLImageElement,
+  c: Colors
+) {
+  const bgGrad = () => {
+    const g = ctx.createLinearGradient(0, 0, W, H);
+    g.addColorStop(0, rgbStr(c.deep));
+    g.addColorStop(1, rgbStr(c.light));
+    return g;
+  };
+
+  if (key === "fullbleed") {
+    // 사진을 꽉 채우고, 왼쪽/하단을 어둡게 덮어 제목 공간 확보 (매거진 스타일)
+    drawCover(ctx, img, 0, 0, W, H);
+    const gx = ctx.createLinearGradient(0, 0, W, 0);
+    gx.addColorStop(0, rgba(c.deep, 0.92));
+    gx.addColorStop(0.4, rgba(c.deep, 0.45));
+    gx.addColorStop(0.7, rgba(c.deep, 0));
+    ctx.fillStyle = gx;
+    ctx.fillRect(0, 0, W, H);
+    const gy = ctx.createLinearGradient(0, H * 0.55, 0, H);
+    gy.addColorStop(0, rgba(c.deep, 0));
+    gy.addColorStop(1, rgba(c.deep, 0.55));
+    ctx.fillStyle = gy;
+    ctx.fillRect(0, 0, W, H);
+    accentTick(ctx, W * 0.07, H * 0.2, W * 0.12, c.accent);
+    return;
+  }
+
+  if (key === "sidebar") {
+    ctx.fillStyle = bgGrad();
+    ctx.fillRect(0, 0, W, H);
+    const pw = Math.round(W * 0.6);
+    const px = W - pw;
+    drawCover(ctx, img, px, 0, pw, H);
+    ctx.fillStyle = rgbStr(c.accent);
+    ctx.fillRect(px - Math.max(3, W / 300), 0, Math.max(3, W / 300), H);
+    accentTick(ctx, W * 0.08, H * 0.2, W * 0.14, c.accent);
+    return;
+  }
+
+  if (key === "bottom") {
+    ctx.fillStyle = bgGrad();
+    ctx.fillRect(0, 0, W, H);
+    const ph = Math.round(H * 0.6);
+    const py = H - ph;
+    drawCover(ctx, img, 0, py, W, ph);
+    ctx.fillStyle = rgbStr(c.accent);
+    ctx.fillRect(0, py - Math.max(3, H / 300), W, Math.max(3, H / 300));
+    accentTick(ctx, W * 0.08, H * 0.18, W * 0.14, c.accent);
+    return;
+  }
+
+  if (key === "diagonal") {
+    ctx.fillStyle = bgGrad();
+    ctx.fillRect(0, 0, W, H);
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(W * 0.42, 0);
+    ctx.lineTo(W, 0);
+    ctx.lineTo(W, H);
+    ctx.lineTo(W * 0.28, H);
+    ctx.closePath();
+    ctx.clip();
+    drawCover(ctx, img, W * 0.28, 0, W * 0.72, H);
+    ctx.restore();
+    ctx.strokeStyle = rgbStr(c.accent);
+    ctx.lineWidth = Math.max(3, W / 300);
+    ctx.beginPath();
+    ctx.moveTo(W * 0.42, 0);
+    ctx.lineTo(W * 0.28, H);
+    ctx.stroke();
+    accentTick(ctx, W * 0.07, H * 0.2, W * 0.13, c.accent);
+    return;
+  }
+
+  if (key === "card") {
+    ctx.fillStyle = bgGrad();
+    ctx.fillRect(0, 0, W, H);
+    const m = Math.round(W * 0.07);
+    const cardY = Math.round(H * 0.3);
+    const cardX = m;
+    const cardW = W - m * 2;
+    const cardH = H - cardY - m;
+    // 그림자
+    ctx.save();
+    ctx.shadowColor = "rgba(0,0,0,0.35)";
+    ctx.shadowBlur = Math.round(W * 0.02);
+    ctx.shadowOffsetY = Math.round(H * 0.01);
+    ctx.fillStyle = "#000";
+    if (ctx.roundRect) {
+      ctx.beginPath();
+      ctx.roundRect(cardX, cardY, cardW, cardH, Math.round(W * 0.012));
+      ctx.fill();
+    } else {
+      ctx.fillRect(cardX, cardY, cardW, cardH);
+    }
+    ctx.restore();
+    // 사진 클립
+    ctx.save();
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(cardX, cardY, cardW, cardH, Math.round(W * 0.012));
+    else ctx.rect(cardX, cardY, cardW, cardH);
+    ctx.clip();
+    drawCover(ctx, img, cardX, cardY, cardW, cardH);
+    ctx.restore();
+    accentTick(ctx, cardX, H * 0.16, W * 0.14, c.accent);
+    return;
+  }
+
+  if (key === "topbar") {
+    drawCover(ctx, img, 0, 0, W, H);
+    const barH = Math.round(H * 0.24);
+    ctx.fillStyle = rgba(c.deep, 0.96);
+    ctx.fillRect(0, 0, W, barH);
+    ctx.fillStyle = rgbStr(c.accent);
+    ctx.fillRect(0, barH, W, Math.max(3, H / 300));
+    accentTick(ctx, W * 0.07, barH * 0.42, W * 0.12, c.accent);
+    return;
+  }
 }
 
 export default function CoverLab() {
@@ -98,9 +236,8 @@ export default function CoverLab() {
 
   const [hasImage, setHasImage] = useState(false);
   const [ratioKey, setRatioKey] = useState<string>("a4-landscape");
-  const [layout, setLayout] = useState<string>("right");
+  const [template, setTemplate] = useState<string>("fullbleed");
   const [tone, setTone] = useState<string>("Auto");
-  const [accentOn, setAccentOn] = useState(true);
 
   const ratio = RATIOS.find((r) => r.key === ratioKey) ?? RATIOS[0];
 
@@ -115,81 +252,18 @@ export default function CoverLab() {
     if (!ctx) return;
 
     const up = uploadRef.current;
-    const [deep, light, accent] =
-      tone === "Auto" ? (up ? autoTone(up) : TONES.Navy) : TONES[tone];
+    const colors: Colors = tone === "Auto" ? (up ? autoTone(up) : TONES.Navy) : TONES[tone];
 
-    // 배경: 대각선 그라데이션
-    const grad = ctx.createLinearGradient(0, 0, W, H);
-    grad.addColorStop(0, deep);
-    grad.addColorStop(1, light);
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, W, H);
-
-    if (!up) return;
-
-    // 사진 패널 위치
-    let px = 0,
-      py = 0,
-      pw: number = W,
-      ph: number = H;
-    let seam: "left" | "right" | "top" = "left";
-    if (layout === "right") {
-      pw = Math.round(W * 0.58);
-      px = W - pw;
-      seam = "left";
-    } else if (layout === "left") {
-      pw = Math.round(W * 0.58);
-      px = 0;
-      seam = "right";
-    } else {
-      ph = Math.round(H * 0.58);
-      py = H - ph;
-      seam = "top";
+    if (!up) {
+      const g = ctx.createLinearGradient(0, 0, W, H);
+      g.addColorStop(0, rgbStr(colors.deep));
+      g.addColorStop(1, rgbStr(colors.light));
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H);
+      return;
     }
-
-    // 이음새만 부드럽게 페더링
-    const off = document.createElement("canvas");
-    off.width = pw;
-    off.height = ph;
-    const octx = off.getContext("2d");
-    if (octx) {
-      drawCover(octx, up, 0, 0, pw, ph);
-      octx.globalCompositeOperation = "destination-in";
-      const f = 0.12;
-      let g2: CanvasGradient;
-      if (seam === "left") {
-        g2 = octx.createLinearGradient(0, 0, pw, 0);
-        g2.addColorStop(0, "rgba(0,0,0,0)");
-        g2.addColorStop(f, "rgba(0,0,0,1)");
-        g2.addColorStop(1, "rgba(0,0,0,1)");
-      } else if (seam === "right") {
-        g2 = octx.createLinearGradient(0, 0, pw, 0);
-        g2.addColorStop(0, "rgba(0,0,0,1)");
-        g2.addColorStop(1 - f, "rgba(0,0,0,1)");
-        g2.addColorStop(1, "rgba(0,0,0,0)");
-      } else {
-        g2 = octx.createLinearGradient(0, 0, 0, ph);
-        g2.addColorStop(0, "rgba(0,0,0,0)");
-        g2.addColorStop(f, "rgba(0,0,0,1)");
-        g2.addColorStop(1, "rgba(0,0,0,1)");
-      }
-      octx.fillStyle = g2;
-      octx.fillRect(0, 0, pw, ph);
-      octx.globalCompositeOperation = "source-over";
-      ctx.drawImage(off, px, py);
-    }
-
-    // 얇은 액센트 라인 (이음새 살짝 안쪽)
-    if (accentOn) {
-      ctx.fillStyle = accent;
-      ctx.globalAlpha = 0.9;
-      const t = Math.max(2, Math.round(W / 400));
-      if (seam === "left") ctx.fillRect(px, 0, t, H);
-      else if (seam === "right") ctx.fillRect(px + pw - t, 0, t, H);
-      else ctx.fillRect(0, py, W, t);
-      ctx.globalAlpha = 1;
-    }
-  }, [ratio, layout, tone, accentOn]);
+    render(template, ctx, W, H, up, colors);
+  }, [ratio, template, tone]);
 
   useEffect(() => {
     draw();
@@ -220,10 +294,10 @@ export default function CoverLab() {
   return (
     <div className="min-h-screen bg-zinc-50 font-sans text-zinc-900 antialiased">
       <main className="mx-auto w-full max-w-4xl px-5 py-8">
-        <h1 className="text-xl font-bold">표지 배경 생성</h1>
+        <h1 className="text-xl font-bold">표지 만들기</h1>
         <p className="mt-1 text-sm text-zinc-500">
-          조감도를 올리면 원본 사진을 그대로 표지에 배치하고 배경을 깔끔하게 채웁니다. 색·위치는
-          즉시 바뀝니다. (글자·로고 없음)
+          조감도를 올리고 마음에 드는 템플릿을 고르세요. 사진이 알맞게 배치됩니다. 모든 설정은 즉시
+          반영되고, 글자·로고는 넣지 않습니다.
         </p>
 
         <div className="mt-6 grid gap-6 md:grid-cols-[1fr_280px]">
@@ -254,6 +328,13 @@ export default function CoverLab() {
           </div>
 
           <div className="space-y-4">
+            <Row label="템플릿">
+              {TEMPLATES.map((t) => (
+                <Chip key={t.key} active={template === t.key} onClick={() => setTemplate(t.key)}>
+                  {t.label}
+                </Chip>
+              ))}
+            </Row>
             <Row label="배경 컬러">
               {TONE_KEYS.map((t) => (
                 <Chip key={t} active={tone === t} onClick={() => setTone(t)}>
@@ -268,23 +349,8 @@ export default function CoverLab() {
                 </Chip>
               ))}
             </Row>
-            <Row label="사진 위치">
-              {LAYOUTS.map((l) => (
-                <Chip key={l.key} active={layout === l.key} onClick={() => setLayout(l.key)}>
-                  {l.label}
-                </Chip>
-              ))}
-            </Row>
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={accentOn}
-                onChange={(e) => setAccentOn(e.target.checked)}
-              />
-              액센트 라인 표시
-            </label>
             <p className="text-xs text-zinc-400">
-              모든 설정은 즉시 반영됩니다. 왼쪽/위쪽 빈 공간에 PPT에서 제목을 넣으세요.
+              어두운/빈 영역에 PPT에서 제목을 넣으세요. 짧은 액센트 선이 제목 시작 위치 가이드입니다.
             </p>
           </div>
         </div>
