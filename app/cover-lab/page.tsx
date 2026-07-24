@@ -52,20 +52,27 @@ function clamp(n: number) {
 const rgbStr = (c: RGB) => `rgb(${clamp(c[0])},${clamp(c[1])},${clamp(c[2])})`;
 const rgba = (c: RGB, a: number) => `rgba(${clamp(c[0])},${clamp(c[1])},${clamp(c[2])},${a})`;
 
+// fx, fy: 크롭 초점 (0=왼쪽/위, 0.5=중앙, 1=오른쪽/아래)
 function drawCover(
   ctx: CanvasRenderingContext2D,
   img: HTMLImageElement,
   dx: number,
   dy: number,
   dw: number,
-  dh: number
+  dh: number,
+  fx = 0.5,
+  fy = 0.5
 ) {
   const s = Math.max(dw / img.naturalWidth, dh / img.naturalHeight);
   const sw = dw / s;
   const sh = dh / s;
-  const sx = (img.naturalWidth - sw) / 2;
-  const sy = (img.naturalHeight - sh) / 2;
+  const sx = (img.naturalWidth - sw) * fx;
+  const sy = (img.naturalHeight - sh) * fy;
   ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
+}
+
+function lerp(a: RGB, b: RGB, t: number): RGB {
+  return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
 }
 
 function autoTone(img: HTMLImageElement): Colors {
@@ -109,27 +116,30 @@ function render(
   W: number,
   H: number,
   img: HTMLImageElement,
-  c: Colors
+  c: Colors,
+  opts: { fx: number; fy: number; ov: number }
 ) {
+  const { fx, fy, ov } = opts; // ov: 그라데이션 강도 0~1
+  // 패널 배경: 강도가 높을수록 더 진하게(대비 크게)
   const bgGrad = () => {
     const g = ctx.createLinearGradient(0, 0, W, H);
     g.addColorStop(0, rgbStr(c.deep));
-    g.addColorStop(1, rgbStr(c.light));
+    g.addColorStop(1, rgbStr(lerp(c.light, c.deep, ov * 0.6)));
     return g;
   };
 
   if (key === "fullbleed") {
     // 사진을 꽉 채우고, 왼쪽/하단을 어둡게 덮어 제목 공간 확보 (매거진 스타일)
-    drawCover(ctx, img, 0, 0, W, H);
+    drawCover(ctx, img, 0, 0, W, H, fx, fy);
     const gx = ctx.createLinearGradient(0, 0, W, 0);
-    gx.addColorStop(0, rgba(c.deep, 0.92));
-    gx.addColorStop(0.4, rgba(c.deep, 0.45));
+    gx.addColorStop(0, rgba(c.deep, 0.35 + ov * 0.6));
+    gx.addColorStop(0.4, rgba(c.deep, 0.15 + ov * 0.35));
     gx.addColorStop(0.7, rgba(c.deep, 0));
     ctx.fillStyle = gx;
     ctx.fillRect(0, 0, W, H);
     const gy = ctx.createLinearGradient(0, H * 0.55, 0, H);
     gy.addColorStop(0, rgba(c.deep, 0));
-    gy.addColorStop(1, rgba(c.deep, 0.55));
+    gy.addColorStop(1, rgba(c.deep, ov * 0.6));
     ctx.fillStyle = gy;
     ctx.fillRect(0, 0, W, H);
     accentTick(ctx, W * 0.07, H * 0.2, W * 0.12, c.accent);
@@ -141,7 +151,7 @@ function render(
     ctx.fillRect(0, 0, W, H);
     const pw = Math.round(W * 0.6);
     const px = W - pw;
-    drawCover(ctx, img, px, 0, pw, H);
+    drawCover(ctx, img, px, 0, pw, H, fx, fy);
     ctx.fillStyle = rgbStr(c.accent);
     ctx.fillRect(px - Math.max(3, W / 300), 0, Math.max(3, W / 300), H);
     accentTick(ctx, W * 0.08, H * 0.2, W * 0.14, c.accent);
@@ -153,7 +163,7 @@ function render(
     ctx.fillRect(0, 0, W, H);
     const ph = Math.round(H * 0.6);
     const py = H - ph;
-    drawCover(ctx, img, 0, py, W, ph);
+    drawCover(ctx, img, 0, py, W, ph, fx, fy);
     ctx.fillStyle = rgbStr(c.accent);
     ctx.fillRect(0, py - Math.max(3, H / 300), W, Math.max(3, H / 300));
     accentTick(ctx, W * 0.08, H * 0.18, W * 0.14, c.accent);
@@ -171,7 +181,7 @@ function render(
     ctx.lineTo(W * 0.28, H);
     ctx.closePath();
     ctx.clip();
-    drawCover(ctx, img, W * 0.28, 0, W * 0.72, H);
+    drawCover(ctx, img, W * 0.28, 0, W * 0.72, H, fx, fy);
     ctx.restore();
     ctx.strokeStyle = rgbStr(c.accent);
     ctx.lineWidth = Math.max(3, W / 300);
@@ -211,16 +221,16 @@ function render(
     if (ctx.roundRect) ctx.roundRect(cardX, cardY, cardW, cardH, Math.round(W * 0.012));
     else ctx.rect(cardX, cardY, cardW, cardH);
     ctx.clip();
-    drawCover(ctx, img, cardX, cardY, cardW, cardH);
+    drawCover(ctx, img, cardX, cardY, cardW, cardH, fx, fy);
     ctx.restore();
     accentTick(ctx, cardX, H * 0.16, W * 0.14, c.accent);
     return;
   }
 
   if (key === "topbar") {
-    drawCover(ctx, img, 0, 0, W, H);
+    drawCover(ctx, img, 0, 0, W, H, fx, fy);
     const barH = Math.round(H * 0.24);
-    ctx.fillStyle = rgba(c.deep, 0.96);
+    ctx.fillStyle = rgba(c.deep, 0.55 + ov * 0.43);
     ctx.fillRect(0, 0, W, barH);
     ctx.fillStyle = rgbStr(c.accent);
     ctx.fillRect(0, barH, W, Math.max(3, H / 300));
@@ -238,6 +248,9 @@ export default function CoverLab() {
   const [ratioKey, setRatioKey] = useState<string>("a4-landscape");
   const [template, setTemplate] = useState<string>("fullbleed");
   const [tone, setTone] = useState<string>("Auto");
+  const [posX, setPosX] = useState(50); // 사진 가로 위치
+  const [posY, setPosY] = useState(50); // 사진 세로 위치
+  const [gradPct, setGradPct] = useState(70); // 그라데이션 강도
 
   const ratio = RATIOS.find((r) => r.key === ratioKey) ?? RATIOS[0];
 
@@ -262,8 +275,12 @@ export default function CoverLab() {
       ctx.fillRect(0, 0, W, H);
       return;
     }
-    render(template, ctx, W, H, up, colors);
-  }, [ratio, template, tone]);
+    render(template, ctx, W, H, up, colors, {
+      fx: posX / 100,
+      fy: posY / 100,
+      ov: gradPct / 100,
+    });
+  }, [ratio, template, tone, posX, posY, gradPct]);
 
   useEffect(() => {
     draw();
@@ -349,6 +366,9 @@ export default function CoverLab() {
                 </Chip>
               ))}
             </Row>
+            <Slider label={`사진 가로 위치 (${posX})`} value={posX} onChange={setPosX} />
+            <Slider label={`사진 세로 위치 (${posY})`} value={posY} onChange={setPosY} />
+            <Slider label={`그라데이션 강도 (${gradPct})`} value={gradPct} onChange={setGradPct} />
             <p className="text-xs text-zinc-400">
               어두운/빈 영역에 PPT에서 제목을 넣으세요. 짧은 액센트 선이 제목 시작 위치 가이드입니다.
             </p>
@@ -364,6 +384,30 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
     <div>
       <div className="mb-1.5 text-xs font-semibold text-zinc-500">{label}</div>
       <div className="flex flex-wrap gap-2">{children}</div>
+    </div>
+  );
+}
+
+function Slider({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  onChange: (v: number) => void;
+}) {
+  return (
+    <div>
+      <div className="mb-1 text-xs font-semibold text-zinc-500">{label}</div>
+      <input
+        type="range"
+        min={0}
+        max={100}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="w-full"
+      />
     </div>
   );
 }
