@@ -2,14 +2,20 @@
 
 import { useCallback, useEffect, useRef, useState, type ChangeEvent } from "react";
 
-// 표지 템플릿 방식 (AI 미사용):
-//  - 프로가 디자인한 표지 레이아웃 여러 개를 코드로 그린다.
-//  - 사용자가 템플릿을 고르면 원본 렌더가 알맞게 슬롯인된다.
-//  - 배경/구도/제목여백은 템플릿이 정하고, 색은 톤(또는 사진 자동추출)에서.
-//  - 전부 브라우저에서 즉시, 무료, 안정적, 글자/워터마크 0.
+// 표지 템플릿 방식 (AI 미사용, 전부 브라우저 canvas · 즉시 · 무료 · 글자/워터마크 0)
 
 type RGB = [number, number, number];
 type Colors = { deep: RGB; light: RGB; accent: RGB };
+type Opts = {
+  fx: number;
+  fy: number;
+  ov: number; // 배경 그라데이션 강도 0~1
+  zoom: number; // 사진 크기 배율 (1~)
+  panel: number; // 프레임(패널) 크기 0~1
+  lineColor: string; // 구분선 색 (#hex)
+  lineGrad: boolean; // 구분선 그라데이션
+  shape: string; // 배경 도형 패턴
+};
 
 const RATIOS = [
   { key: "a4-landscape", label: "A4 가로", w: 1600, h: 1131 },
@@ -37,6 +43,13 @@ const TEMPLATES = [
   { key: "topbar", label: "상단 타이틀바" },
 ] as const;
 
+const SHAPES = [
+  { key: "none", label: "없음" },
+  { key: "circle", label: "원" },
+  { key: "band", label: "밴드" },
+  { key: "triangle", label: "삼각" },
+] as const;
+
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -51,8 +64,17 @@ function clamp(n: number) {
 }
 const rgbStr = (c: RGB) => `rgb(${clamp(c[0])},${clamp(c[1])},${clamp(c[2])})`;
 const rgba = (c: RGB, a: number) => `rgba(${clamp(c[0])},${clamp(c[1])},${clamp(c[2])},${a})`;
+function hexToRgb(h: string): RGB {
+  let s = h.replace("#", "");
+  if (s.length === 3) s = s.split("").map((x) => x + x).join("");
+  const n = parseInt(s, 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+function lerp(a: RGB, b: RGB, t: number): RGB {
+  return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+}
 
-// fx, fy: 크롭 초점 (0=왼쪽/위, 0.5=중앙, 1=오른쪽/아래)
+// fx,fy: 크롭 초점, zoom: 배율(>1 확대)
 function drawCover(
   ctx: CanvasRenderingContext2D,
   img: HTMLImageElement,
@@ -61,18 +83,15 @@ function drawCover(
   dw: number,
   dh: number,
   fx = 0.5,
-  fy = 0.5
+  fy = 0.5,
+  zoom = 1
 ) {
-  const s = Math.max(dw / img.naturalWidth, dh / img.naturalHeight);
+  const s = Math.max(dw / img.naturalWidth, dh / img.naturalHeight) * zoom;
   const sw = dw / s;
   const sh = dh / s;
   const sx = (img.naturalWidth - sw) * fx;
   const sy = (img.naturalHeight - sh) * fy;
   ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
-}
-
-function lerp(a: RGB, b: RGB, t: number): RGB {
-  return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
 }
 
 function autoTone(img: HTMLImageElement): Colors {
@@ -103,13 +122,78 @@ function autoTone(img: HTMLImageElement): Colors {
   };
 }
 
-// 제목 자리 힌트용 짧은 액센트 선 (장식)
-function accentTick(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, col: RGB) {
-  ctx.fillStyle = rgbStr(col);
+// 구분선 (색상/그라데이션 지원)
+function divider(
+  ctx: CanvasRenderingContext2D,
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+  thick: number,
+  colorHex: string,
+  grad: boolean
+) {
+  ctx.lineWidth = thick;
+  if (grad) {
+    const [r, g, b] = hexToRgb(colorHex);
+    const gg = ctx.createLinearGradient(x1, y1, x2, y2);
+    gg.addColorStop(0, `rgba(${r},${g},${b},0)`);
+    gg.addColorStop(0.5, `rgba(${r},${g},${b},1)`);
+    gg.addColorStop(1, `rgba(${r},${g},${b},0)`);
+    ctx.strokeStyle = gg;
+  } else {
+    ctx.strokeStyle = colorHex;
+  }
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.stroke();
+}
+
+function accentTick(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, colorHex: string) {
+  ctx.fillStyle = colorHex;
   ctx.fillRect(x, y, w, Math.max(3, w * 0.03));
 }
 
-// ── 템플릿별 그리기 ──────────────────────────────────────────────
+// 배경 장식 도형 (그라데이션) — 주로 좌상단 제목 영역에 은은하게
+function drawShape(ctx: CanvasRenderingContext2D, W: number, H: number, shape: string, colorHex: string) {
+  if (shape === "none") return;
+  const [r, g, b] = hexToRgb(colorHex);
+  ctx.save();
+  if (shape === "circle") {
+    const grd = ctx.createRadialGradient(W * 0.18, H * 0.22, 0, W * 0.18, H * 0.22, W * 0.42);
+    grd.addColorStop(0, `rgba(${r},${g},${b},0.3)`);
+    grd.addColorStop(1, `rgba(${r},${g},${b},0)`);
+    ctx.fillStyle = grd;
+    ctx.beginPath();
+    ctx.arc(W * 0.18, H * 0.22, W * 0.42, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (shape === "band") {
+    ctx.translate(W * 0.3, H * 0.28);
+    ctx.rotate(-0.4);
+    const bw = W * 1.1;
+    const bh = H * 0.16;
+    const grd = ctx.createLinearGradient(-bw / 2, 0, bw / 2, 0);
+    grd.addColorStop(0, `rgba(${r},${g},${b},0)`);
+    grd.addColorStop(0.5, `rgba(${r},${g},${b},0.22)`);
+    grd.addColorStop(1, `rgba(${r},${g},${b},0)`);
+    ctx.fillStyle = grd;
+    ctx.fillRect(-bw / 2, -bh / 2, bw, bh);
+  } else if (shape === "triangle") {
+    const grd = ctx.createLinearGradient(0, 0, W * 0.5, H * 0.5);
+    grd.addColorStop(0, `rgba(${r},${g},${b},0.32)`);
+    grd.addColorStop(1, `rgba(${r},${g},${b},0)`);
+    ctx.fillStyle = grd;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(W * 0.48, 0);
+    ctx.lineTo(0, H * 0.6);
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
 function render(
   key: string,
   ctx: CanvasRenderingContext2D,
@@ -117,10 +201,10 @@ function render(
   H: number,
   img: HTMLImageElement,
   c: Colors,
-  opts: { fx: number; fy: number; ov: number }
+  o: Opts
 ) {
-  const { fx, fy, ov } = opts; // ov: 그라데이션 강도 0~1
-  // 패널 배경: 강도가 높을수록 더 진하게(대비 크게)
+  const { fx, fy, ov, zoom, panel, lineColor, lineGrad, shape } = o;
+  const tline = Math.max(3, W / 300);
   const bgGrad = () => {
     const g = ctx.createLinearGradient(0, 0, W, H);
     g.addColorStop(0, rgbStr(c.deep));
@@ -129,12 +213,12 @@ function render(
   };
 
   if (key === "fullbleed") {
-    // 사진을 꽉 채우고, 왼쪽/하단을 어둡게 덮어 제목 공간 확보 (매거진 스타일)
-    drawCover(ctx, img, 0, 0, W, H, fx, fy);
+    drawCover(ctx, img, 0, 0, W, H, fx, fy, zoom);
+    const edge = 0.5 + panel * 0.4; // 어두운 제목영역 폭
     const gx = ctx.createLinearGradient(0, 0, W, 0);
     gx.addColorStop(0, rgba(c.deep, 0.35 + ov * 0.6));
-    gx.addColorStop(0.4, rgba(c.deep, 0.15 + ov * 0.35));
-    gx.addColorStop(0.7, rgba(c.deep, 0));
+    gx.addColorStop(edge * 0.6, rgba(c.deep, 0.12 + ov * 0.3));
+    gx.addColorStop(edge, rgba(c.deep, 0));
     ctx.fillStyle = gx;
     ctx.fillRect(0, 0, W, H);
     const gy = ctx.createLinearGradient(0, H * 0.55, 0, H);
@@ -142,99 +226,95 @@ function render(
     gy.addColorStop(1, rgba(c.deep, ov * 0.6));
     ctx.fillStyle = gy;
     ctx.fillRect(0, 0, W, H);
-    accentTick(ctx, W * 0.07, H * 0.2, W * 0.12, c.accent);
+    drawShape(ctx, W, H, shape, lineColor);
+    accentTick(ctx, W * 0.07, H * 0.2, W * 0.12, lineColor);
     return;
   }
 
   if (key === "sidebar") {
     ctx.fillStyle = bgGrad();
     ctx.fillRect(0, 0, W, H);
-    const pw = Math.round(W * 0.6);
+    drawShape(ctx, W, H, shape, lineColor);
+    const pw = Math.round(W * (0.45 + panel * 0.4));
     const px = W - pw;
-    drawCover(ctx, img, px, 0, pw, H, fx, fy);
-    ctx.fillStyle = rgbStr(c.accent);
-    ctx.fillRect(px - Math.max(3, W / 300), 0, Math.max(3, W / 300), H);
-    accentTick(ctx, W * 0.08, H * 0.2, W * 0.14, c.accent);
+    drawCover(ctx, img, px, 0, pw, H, fx, fy, zoom);
+    divider(ctx, px - tline / 2, 0, px - tline / 2, H, tline, lineColor, lineGrad);
+    accentTick(ctx, W * 0.08, H * 0.2, W * 0.14, lineColor);
     return;
   }
 
   if (key === "bottom") {
     ctx.fillStyle = bgGrad();
     ctx.fillRect(0, 0, W, H);
-    const ph = Math.round(H * 0.6);
+    drawShape(ctx, W, H, shape, lineColor);
+    const ph = Math.round(H * (0.45 + panel * 0.4));
     const py = H - ph;
-    drawCover(ctx, img, 0, py, W, ph, fx, fy);
-    ctx.fillStyle = rgbStr(c.accent);
-    ctx.fillRect(0, py - Math.max(3, H / 300), W, Math.max(3, H / 300));
-    accentTick(ctx, W * 0.08, H * 0.18, W * 0.14, c.accent);
+    drawCover(ctx, img, 0, py, W, ph, fx, fy, zoom);
+    divider(ctx, 0, py - tline / 2, W, py - tline / 2, tline, lineColor, lineGrad);
+    accentTick(ctx, W * 0.08, H * 0.18, W * 0.14, lineColor);
     return;
   }
 
   if (key === "diagonal") {
     ctx.fillStyle = bgGrad();
     ctx.fillRect(0, 0, W, H);
+    drawShape(ctx, W, H, shape, lineColor);
+    const topX = W * (0.6 - panel * 0.3);
+    const botX = topX - W * 0.14;
     ctx.save();
     ctx.beginPath();
-    ctx.moveTo(W * 0.42, 0);
+    ctx.moveTo(topX, 0);
     ctx.lineTo(W, 0);
     ctx.lineTo(W, H);
-    ctx.lineTo(W * 0.28, H);
+    ctx.lineTo(botX, H);
     ctx.closePath();
     ctx.clip();
-    drawCover(ctx, img, W * 0.28, 0, W * 0.72, H, fx, fy);
+    drawCover(ctx, img, botX, 0, W - botX, H, fx, fy, zoom);
     ctx.restore();
-    ctx.strokeStyle = rgbStr(c.accent);
-    ctx.lineWidth = Math.max(3, W / 300);
-    ctx.beginPath();
-    ctx.moveTo(W * 0.42, 0);
-    ctx.lineTo(W * 0.28, H);
-    ctx.stroke();
-    accentTick(ctx, W * 0.07, H * 0.2, W * 0.13, c.accent);
+    divider(ctx, topX, 0, botX, H, tline, lineColor, lineGrad);
+    accentTick(ctx, W * 0.07, H * 0.2, W * 0.13, lineColor);
     return;
   }
 
   if (key === "card") {
     ctx.fillStyle = bgGrad();
     ctx.fillRect(0, 0, W, H);
-    const m = Math.round(W * 0.07);
-    const cardY = Math.round(H * 0.3);
+    drawShape(ctx, W, H, shape, lineColor);
+    const m = Math.round(W * (0.12 - panel * 0.07));
+    const cardH = Math.round(H * (0.45 + panel * 0.3));
+    const cardY = H - cardH - m;
     const cardX = m;
     const cardW = W - m * 2;
-    const cardH = H - cardY - m;
-    // 그림자
+    const rad = Math.round(W * 0.012);
     ctx.save();
     ctx.shadowColor = "rgba(0,0,0,0.35)";
     ctx.shadowBlur = Math.round(W * 0.02);
     ctx.shadowOffsetY = Math.round(H * 0.01);
     ctx.fillStyle = "#000";
-    if (ctx.roundRect) {
-      ctx.beginPath();
-      ctx.roundRect(cardX, cardY, cardW, cardH, Math.round(W * 0.012));
-      ctx.fill();
-    } else {
-      ctx.fillRect(cardX, cardY, cardW, cardH);
-    }
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(cardX, cardY, cardW, cardH, rad);
+    else ctx.rect(cardX, cardY, cardW, cardH);
+    ctx.fill();
     ctx.restore();
-    // 사진 클립
     ctx.save();
     ctx.beginPath();
-    if (ctx.roundRect) ctx.roundRect(cardX, cardY, cardW, cardH, Math.round(W * 0.012));
+    if (ctx.roundRect) ctx.roundRect(cardX, cardY, cardW, cardH, rad);
     else ctx.rect(cardX, cardY, cardW, cardH);
     ctx.clip();
-    drawCover(ctx, img, cardX, cardY, cardW, cardH, fx, fy);
+    drawCover(ctx, img, cardX, cardY, cardW, cardH, fx, fy, zoom);
     ctx.restore();
-    accentTick(ctx, cardX, H * 0.16, W * 0.14, c.accent);
+    accentTick(ctx, cardX, cardY - H * 0.06, W * 0.14, lineColor);
     return;
   }
 
   if (key === "topbar") {
-    drawCover(ctx, img, 0, 0, W, H, fx, fy);
-    const barH = Math.round(H * 0.24);
+    drawCover(ctx, img, 0, 0, W, H, fx, fy, zoom);
+    const barH = Math.round(H * (0.15 + panel * 0.22));
     ctx.fillStyle = rgba(c.deep, 0.55 + ov * 0.43);
     ctx.fillRect(0, 0, W, barH);
-    ctx.fillStyle = rgbStr(c.accent);
-    ctx.fillRect(0, barH, W, Math.max(3, H / 300));
-    accentTick(ctx, W * 0.07, barH * 0.42, W * 0.12, c.accent);
+    drawShape(ctx, W, barH * 2, shape, lineColor);
+    divider(ctx, 0, barH, W, barH, tline, lineColor, lineGrad);
+    accentTick(ctx, W * 0.07, barH * 0.42, W * 0.12, lineColor);
     return;
   }
 }
@@ -248,9 +328,14 @@ export default function CoverLab() {
   const [ratioKey, setRatioKey] = useState<string>("a4-landscape");
   const [template, setTemplate] = useState<string>("fullbleed");
   const [tone, setTone] = useState<string>("Auto");
-  const [posX, setPosX] = useState(50); // 사진 가로 위치
-  const [posY, setPosY] = useState(50); // 사진 세로 위치
-  const [gradPct, setGradPct] = useState(70); // 그라데이션 강도
+  const [posX, setPosX] = useState(50);
+  const [posY, setPosY] = useState(50);
+  const [gradPct, setGradPct] = useState(70);
+  const [zoomPct, setZoomPct] = useState(100);
+  const [panelPct, setPanelPct] = useState(55);
+  const [lineColor, setLineColor] = useState("#c9a24a");
+  const [lineGrad, setLineGrad] = useState(false);
+  const [shape, setShape] = useState("none");
 
   const ratio = RATIOS.find((r) => r.key === ratioKey) ?? RATIOS[0];
 
@@ -279,8 +364,13 @@ export default function CoverLab() {
       fx: posX / 100,
       fy: posY / 100,
       ov: gradPct / 100,
+      zoom: zoomPct / 100,
+      panel: panelPct / 100,
+      lineColor,
+      lineGrad,
+      shape,
     });
-  }, [ratio, template, tone, posX, posY, gradPct]);
+  }, [ratio, template, tone, posX, posY, gradPct, zoomPct, panelPct, lineColor, lineGrad, shape]);
 
   useEffect(() => {
     draw();
@@ -313,11 +403,11 @@ export default function CoverLab() {
       <main className="mx-auto w-full max-w-4xl px-5 py-8">
         <h1 className="text-xl font-bold">표지 만들기</h1>
         <p className="mt-1 text-sm text-zinc-500">
-          조감도를 올리고 마음에 드는 템플릿을 고르세요. 사진이 알맞게 배치됩니다. 모든 설정은 즉시
-          반영되고, 글자·로고는 넣지 않습니다.
+          조감도를 올리고 템플릿·색·크기를 조절하세요. 모든 설정은 즉시 반영되고, 글자·로고는 넣지
+          않습니다.
         </p>
 
-        <div className="mt-6 grid gap-6 md:grid-cols-[1fr_280px]">
+        <div className="mt-6 grid gap-6 md:grid-cols-[1fr_300px]">
           <div>
             <button
               onClick={() => fileInput.current?.click()}
@@ -366,11 +456,40 @@ export default function CoverLab() {
                 </Chip>
               ))}
             </Row>
+
             <Slider label={`사진 가로 위치 (${posX})`} value={posX} onChange={setPosX} />
             <Slider label={`사진 세로 위치 (${posY})`} value={posY} onChange={setPosY} />
+            <Slider label={`사진 크기 (${zoomPct}%)`} min={100} max={250} value={zoomPct} onChange={setZoomPct} />
+            <Slider label={`프레임 크기 (${panelPct})`} min={30} max={80} value={panelPct} onChange={setPanelPct} />
             <Slider label={`그라데이션 강도 (${gradPct})`} value={gradPct} onChange={setGradPct} />
+
+            <Row label="구분선 색상">
+              <input
+                type="color"
+                value={lineColor}
+                onChange={(e) => setLineColor(e.target.value)}
+                className="h-8 w-14 cursor-pointer rounded border border-zinc-200 bg-white"
+              />
+              <label className="flex items-center gap-1.5 text-sm text-zinc-600">
+                <input
+                  type="checkbox"
+                  checked={lineGrad}
+                  onChange={(e) => setLineGrad(e.target.checked)}
+                />
+                구분선 그라데이션
+              </label>
+            </Row>
+
+            <Row label="배경 도형 패턴">
+              {SHAPES.map((s) => (
+                <Chip key={s.key} active={shape === s.key} onClick={() => setShape(s.key)}>
+                  {s.label}
+                </Chip>
+              ))}
+            </Row>
+
             <p className="text-xs text-zinc-400">
-              어두운/빈 영역에 PPT에서 제목을 넣으세요. 짧은 액센트 선이 제목 시작 위치 가이드입니다.
+              어두운/빈 영역에 PPT에서 제목을 넣으세요. 액센트 선이 제목 시작 위치 가이드입니다.
             </p>
           </div>
         </div>
@@ -383,7 +502,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
   return (
     <div>
       <div className="mb-1.5 text-xs font-semibold text-zinc-500">{label}</div>
-      <div className="flex flex-wrap gap-2">{children}</div>
+      <div className="flex flex-wrap items-center gap-2">{children}</div>
     </div>
   );
 }
@@ -392,18 +511,22 @@ function Slider({
   label,
   value,
   onChange,
+  min = 0,
+  max = 100,
 }: {
   label: string;
   value: number;
   onChange: (v: number) => void;
+  min?: number;
+  max?: number;
 }) {
   return (
     <div>
       <div className="mb-1 text-xs font-semibold text-zinc-500">{label}</div>
       <input
         type="range"
-        min={0}
-        max={100}
+        min={min}
+        max={max}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
         className="w-full"
