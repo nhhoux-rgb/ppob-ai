@@ -1,0 +1,14 @@
+{
+  "name": "cover-generator-spike",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "부동산 보고서 표지 배경 생성 품질 검증 spike (gpt-image-1)",
+  "scripts": {
+    "gen": "node generate.mjs",
+    "dry": "node generate.mjs --dry-run"
+  },
+  "dependencies": {
+    "openai": "^6.45.0"
+  }
+}
