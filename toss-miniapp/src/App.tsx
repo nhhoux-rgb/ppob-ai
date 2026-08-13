@@ -24,6 +24,13 @@ const CONFIDENCE_LABEL: Record<PriceResult["confidence"], string> = {
 
 const won = (n: number) => `${Math.round(n).toLocaleString()}원`;
 
+// 토스가 base64만(접두어 없이) 줄 수 있어 data URL 형태로 보정
+function toDataUrl(uri?: string): string {
+  if (!uri) return "";
+  if (uri.startsWith("data:")) return uri;
+  return `data:image/jpeg;base64,${uri}`;
+}
+
 export default function App() {
   const [image, setImage] = useState("");
   const [cost, setCost] = useState(1000);
@@ -52,8 +59,9 @@ export default function App() {
   async function pickCamera() {
     try {
       const res = await Device.openCamera({ base64: true, maxWidth: 1024 });
-      if (res?.dataUri) {
-        setImage(res.dataUri);
+      const uri = toDataUrl(res?.dataUri);
+      if (uri) {
+        setImage(uri);
         setResult(null);
         setError("");
       }
@@ -69,7 +77,7 @@ export default function App() {
         maxCount: 1,
         maxWidth: 1024,
       });
-      const uri = res?.[0]?.dataUri;
+      const uri = toDataUrl(res?.[0]?.dataUri);
       if (uri) {
         setImage(uri);
         setResult(null);
@@ -92,10 +100,11 @@ export default function App() {
         body: JSON.stringify({ imageBase64: image }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "분석 실패");
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
       setResult(data);
-    } catch {
-      setError("분석 중 오류가 발생했어요. 잠시 후 다시 시도해 주세요.");
+    } catch (e) {
+      const reason = e instanceof Error ? e.message : String(e);
+      setError(`분석 오류: ${reason}`);
     } finally {
       setLoading(false);
     }
