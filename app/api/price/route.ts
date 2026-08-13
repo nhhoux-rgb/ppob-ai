@@ -2,6 +2,22 @@ import OpenAI from "openai";
 
 export const runtime = "nodejs";
 
+// ── CORS (토스 미니앱 등 외부 출처에서 호출 허용) ────────────────
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+};
+
+function jsonRes(data: unknown, status = 200) {
+  return Response.json(data, { status, headers: CORS_HEADERS });
+}
+
+// CORS preflight
+export function OPTIONS() {
+  return new Response(null, { status: 204, headers: CORS_HEADERS });
+}
+
 // ── 남용 방지 설정 (analyze와 동일 패턴) ─────────────────────────
 const MAX_IMAGE_CHARS = 10_000_000; // base64 기준 약 7MB
 const RATE_LIMIT = 10;
@@ -76,30 +92,14 @@ const PROMPT = `
 
 export async function POST(req: Request) {
   try {
-    // ── 출처(Origin) 체크 ──
-    const host = req.headers.get("host");
-    const origin = req.headers.get("origin");
-    if (origin && host) {
-      try {
-        if (new URL(origin).host !== host) {
-          return Response.json(
-            { error: "허용되지 않은 요청입니다." },
-            { status: 403 }
-          );
-        }
-      } catch {
-        // 깨진 origin은 통과시키되 아래에서 걸러짐
-      }
-    }
-
     // ── rate limit ──
     const ip =
       (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() ||
       "unknown";
     if (isRateLimited(ip)) {
-      return Response.json(
+      return jsonRes(
         { error: "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요." },
-        { status: 429 }
+        429
       );
     }
 
@@ -107,18 +107,15 @@ export async function POST(req: Request) {
 
     // ── 입력 검증 ──
     if (!imageBase64 || typeof imageBase64 !== "string") {
-      return Response.json({ error: "이미지가 없습니다." }, { status: 400 });
+      return jsonRes({ error: "이미지가 없습니다." }, 400);
     }
     if (!imageBase64.startsWith("data:image/")) {
-      return Response.json(
-        { error: "이미지 형식이 올바르지 않습니다." },
-        { status: 400 }
-      );
+      return jsonRes({ error: "이미지 형식이 올바르지 않습니다." }, 400);
     }
     if (imageBase64.length > MAX_IMAGE_CHARS) {
-      return Response.json(
+      return jsonRes(
         { error: "이미지 용량이 너무 큽니다. 더 작은 사진을 사용해 주세요." },
-        { status: 413 }
+        413
       );
     }
 
@@ -152,19 +149,13 @@ export async function POST(req: Request) {
 
     const text = response.output_text;
     if (!text) {
-      return Response.json(
-        { error: "분석 결과를 받지 못했습니다." },
-        { status: 502 }
-      );
+      return jsonRes({ error: "분석 결과를 받지 못했습니다." }, 502);
     }
 
     const json = JSON.parse(text);
-    return Response.json(json);
+    return jsonRes(json);
   } catch (error) {
     console.error(error);
-    return Response.json(
-      { error: "분석 중 오류가 발생했습니다." },
-      { status: 500 }
-    );
+    return jsonRes({ error: "분석 중 오류가 발생했습니다." }, 500);
   }
 }
