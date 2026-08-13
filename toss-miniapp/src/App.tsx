@@ -94,9 +94,11 @@ export default function App() {
     setError("");
     setResult(null);
     try {
+      // CORS "단순 요청"으로 보내 OPTIONS 프리플라이트를 생략
+      // (토스 아웃바운드 프록시가 프리플라이트를 막는 경우 우회)
       const res = await fetch(API_URL, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "text/plain;charset=UTF-8" },
         body: JSON.stringify({ imageBase64: image }),
       });
       const data = await res.json();
