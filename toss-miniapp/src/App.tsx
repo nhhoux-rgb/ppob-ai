@@ -104,9 +104,8 @@ export default function App() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
       setResult(data);
-    } catch (e) {
-      const reason = e instanceof Error ? e.message : String(e);
-      setError(`분석 오류: ${reason}`);
+    } catch {
+      setError("분석 중 오류가 발생했어요. 잠시 후 다시 시도해 주세요.");
     } finally {
       setLoading(false);
     }
