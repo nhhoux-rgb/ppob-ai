@@ -1,8 +1,16 @@
-import { useRef, useState, type ChangeEvent } from "react";
-import { Device } from "@apps-in-toss/web-framework";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
+import {
+  Device,
+  loadFullScreenAd,
+  showFullScreenAd,
+} from "@apps-in-toss/web-framework";
 
 // 기존 Vercel 백엔드 재사용 (CORS 허용됨)
 const API_URL = "https://ppob-ai-aics.vercel.app/api/price";
+
+// 인앱 광고 그룹 ID
+// ⚠️ 지금은 "테스트용" 보상형 광고 ID. 실제 출시 전 콘솔의 실제 광고그룹 ID로 교체해야 함.
+const AD_GROUP_ID = "ait-ad-test-rewarded-id";
 
 type PriceResult = {
   item: string;
@@ -38,6 +46,30 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
+  const adLoadedRef = useRef(false);
+
+  // 인앱 광고 미리 로드 (지원 환경에서만)
+  function loadAd() {
+    try {
+      if (!loadFullScreenAd.isSupported?.()) return;
+      loadFullScreenAd({
+        options: { adGroupId: AD_GROUP_ID },
+        onEvent: (e) => {
+          if (e.type === "loaded") adLoadedRef.current = true;
+        },
+        onError: () => {
+          adLoadedRef.current = false;
+        },
+      });
+    } catch {
+      // 광고 미지원 환경 — 무시
+    }
+  }
+
+  useEffect(() => {
+    loadAd();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // 토스 밖(브라우저)에서 테스트할 때 파일 선택으로 폴백
   function fileFallback() {
@@ -88,7 +120,36 @@ export default function App() {
     }
   }
 
-  async function analyze() {
+  // "분석하기" → 광고를 먼저 보여주고(가능하면), 닫히면 분석 실행.
+  // 광고가 준비 안 됐거나 미지원 환경이면 바로 분석. (사용자를 막지 않음)
+  function analyze() {
+    if (!image || loading) return;
+    try {
+      if (showFullScreenAd.isSupported?.() && adLoadedRef.current) {
+        let proceeded = false;
+        const proceed = () => {
+          if (proceeded) return;
+          proceeded = true;
+          adLoadedRef.current = false;
+          runAnalysis();
+          loadAd(); // 다음 광고 미리 로드
+        };
+        showFullScreenAd({
+          options: { adGroupId: AD_GROUP_ID },
+          onEvent: (e) => {
+            if (e.type === "dismissed" || e.type === "failedToShow") proceed();
+          },
+          onError: () => proceed(),
+        });
+        return;
+      }
+    } catch {
+      // 광고 실패 시 그냥 분석 진행
+    }
+    runAnalysis();
+  }
+
+  async function runAnalysis() {
     if (!image) return;
     setLoading(true);
     setError("");
