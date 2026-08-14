@@ -8,9 +8,8 @@ import {
 // 기존 Vercel 백엔드 재사용 (CORS 허용됨)
 const API_URL = "https://ppob-ai-aics.vercel.app/api/price";
 
-// 인앱 광고 그룹 ID
-// ⚠️ 지금은 "테스트용" 보상형 광고 ID. 실제 출시 전 콘솔의 실제 광고그룹 ID로 교체해야 함.
-const AD_GROUP_ID = "ait-ad-test-rewarded-id";
+// 인앱 광고 그룹 ID (콘솔 "보상광고1차" 실제 광고그룹 ID)
+const AD_GROUP_ID = "ait.v2.live.c49b52e626594f10";
 
 type PriceResult = {
   item: string;
