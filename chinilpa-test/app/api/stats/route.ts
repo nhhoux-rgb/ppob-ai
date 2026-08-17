@@ -19,6 +19,28 @@ type Stats = {
 
 const EMPTY: Stats = { total: 0, stage: {}, type: {} };
 
+// 토스 미니앱(chinilpa-miniapp)이 다른 오리진에서 이 API를 부른다. 토스의
+// 아웃바운드 프록시가 CORS 프리플라이트를 막기 때문에 미니앱은 Content-Type
+// 을 text/plain 으로 보내 "단순 요청"으로 만든다. 그러면 OPTIONS 는 아예
+// 가지 않지만, 응답을 읽으려면 여전히 이 헤더가 필요하다.
+// (Request.json() 은 Content-Type 을 보지 않고 본문을 파싱하므로 text/plain
+//  으로 와도 그대로 읽힌다.)
+const CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Max-Age": "86400",
+};
+
+function json(body: Stats, status = 200) {
+  return Response.json(body, { status, headers: CORS });
+}
+
+// 프리플라이트가 통과하는 환경(일반 브라우저 등)을 위해 함께 열어 둔다.
+export function OPTIONS() {
+  return new Response(null, { status: 204, headers: CORS });
+}
+
 function getRedis(): Redis | null {
   const url = process.env.KV_REST_API_URL ?? process.env.UPSTASH_REDIS_REST_URL;
   const token =
@@ -52,12 +74,12 @@ async function read(redis: Redis): Promise<Stats> {
 
 export async function GET() {
   const redis = getRedis();
-  if (!redis) return Response.json(EMPTY);
+  if (!redis) return json(EMPTY);
   try {
-    return Response.json(await read(redis));
+    return json(await read(redis));
   } catch (error) {
     console.error(error);
-    return Response.json(EMPTY);
+    return json(EMPTY);
   }
 }
 
@@ -71,7 +93,7 @@ export async function POST(request: Request) {
     stage = Number(body?.stage);
     type = String(body?.type ?? "");
   } catch {
-    return Response.json(EMPTY, { status: 400 });
+    return json(EMPTY, 400);
   }
 
   // 해시가 임의의 값으로 오염되지 않도록 화이트리스트로 검증한다.
@@ -79,11 +101,11 @@ export async function POST(request: Request) {
   const validStage = Number.isInteger(stage) && stage >= 0 && stage <= 6;
   const validType = Object.prototype.hasOwnProperty.call(TYPES, type);
   if (!validStage || !validType) {
-    return Response.json(EMPTY, { status: 400 });
+    return json(EMPTY, 400);
   }
 
   const redis = getRedis();
-  if (!redis) return Response.json(EMPTY);
+  if (!redis) return json(EMPTY);
 
   try {
     await Promise.all([
@@ -91,9 +113,9 @@ export async function POST(request: Request) {
       redis.hincrby(STAGE_KEY, String(stage), 1),
       redis.hincrby(TYPE_KEY, type, 1),
     ]);
-    return Response.json(await read(redis));
+    return json(await read(redis));
   } catch (error) {
     console.error(error);
-    return Response.json(EMPTY);
+    return json(EMPTY);
   }
 }

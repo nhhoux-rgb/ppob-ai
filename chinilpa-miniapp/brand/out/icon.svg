@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <radialGradient id="vig" cx="50%" cy="38%" r="72%">
+      <stop offset="0%" stop-color="#E2DDCC"/>
+      <stop offset="100%" stop-color="#C9C3AF"/>
+    </radialGradient>
+  </defs>
+  <rect width="1024" height="1024" fill="#D8D3C2"/>
+  <rect width="1024" height="1024" fill="url(#vig)"/>
+
+  <!-- 인장만 남긴다. 서식지 괘선을 넣으면 플랫폼이 아이콘을 원형·둥근사각으로
+       마스킹할 때 짧은 호로 잘려서 실수처럼 보인다. -->
+  <g transform="translate(512 512) rotate(-11)">
+    <circle r="306" fill="none" stroke="#8E2B1F" stroke-width="36"/>
+    <text x="0" y="0" font-family="Noto Serif KR Black" font-size="412"
+          text-anchor="middle" dominant-baseline="central" fill="#8E2B1F">秘</text>
+  </g>
+</svg>
