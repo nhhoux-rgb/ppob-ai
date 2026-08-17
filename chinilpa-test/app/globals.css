@@ -340,6 +340,19 @@ a:focus-visible {
   height: 100%;
   display: block;
 }
+/* 도장의 색과 서체는 전부 CSS로 지정한다. SVG 프레젠테이션 속성 자리에서의
+   var() 치환은 브라우저마다 동작이 갈려서, fill="var(--seal)" 같은 식으로
+   두면 인장이 붉은색이 아니라 검정으로 찍히거나 서체가 통째로 무시된다. */
+.seal circle {
+  fill: none;
+  stroke: var(--seal);
+  stroke-width: 5;
+}
+.seal text {
+  font-family: var(--serif);
+  font-weight: 800;
+  fill: var(--seal);
+}
 @keyframes stampin {
   0% {
     opacity: 0;

@@ -70,10 +70,18 @@ export default function RootLayout({
           href="https://fonts.gstatic.com"
           crossOrigin="anonymous"
         />
+        {/* Noto Serif KR 을 함께 받는 이유: 구글 폰트판 나눔명조에는 한자
+            글리프가 하나도 없다. 이 서비스는 秘 도장, 身元調書, 第一段階,
+            所見, 그리고 결과 도장 아홉 자(抗組隱忍生兩利轉密)까지 한자가
+            디자인의 핵심인데, 나눔명조만 받으면 그 글자들이 전부 기기 기본
+            폰트로 떨어져 서체가 어긋나고 CJK 폰트가 없는 기기에서는 □ 로
+            보인다. 한글·라틴은 나눔명조가, 한자는 Noto Serif KR 이 맡는다
+            (CSS 의 --serif 스택 순서가 그렇게 잡혀 있다). unicode-range 덕분에
+            실제로 쓰인 한자가 든 청크만 내려받는다. */}
         {/* eslint-disable-next-line @next/next/no-page-custom-font */}
         <link
           rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Noto+Serif+KR:wght@400;700;900&display=swap"
         />
         {children}
         <Analytics />

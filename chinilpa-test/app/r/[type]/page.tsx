@@ -64,18 +64,12 @@ export default async function ResultPage({ params }: Props) {
                 cx="50"
                 cy="50"
                 r="45"
-                fill="none"
-                stroke="var(--seal)"
-                strokeWidth="5"
               />
               <text
                 x="50"
                 y="50"
                 textAnchor="middle"
                 dominantBaseline="central"
-                fill="var(--seal)"
-                fontFamily="var(--serif)"
-                fontWeight="800"
                 fontSize="46"
               >
                 {t.ch}
