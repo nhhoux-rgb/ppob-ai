@@ -1,4 +1,4 @@
-// 토스 개발자센터 제출용 앱 아이콘·대표 이미지 생성기.
+// 대표 이미지(배너) 생성기. 앱 로고는 brand/logo.mjs 가 만든다.
 //
 //   npm run brand
 //
@@ -63,31 +63,6 @@ async function ensureFonts() {
     paths.push(dest);
   }
   return paths;
-}
-
-// ── 앱 아이콘 ──────────────────────────────────────────────────────
-// 플랫폼이 모서리를 둥글게 깎으므로 중요한 요소는 가운데 80% 안에 둔다.
-function iconSvg() {
-  const S = 1024;
-  const c = S / 2;
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${S}" height="${S}" viewBox="0 0 ${S} ${S}">
-  <defs>
-    <radialGradient id="vig" cx="50%" cy="38%" r="72%">
-      <stop offset="0%" stop-color="#E2DDCC"/>
-      <stop offset="100%" stop-color="#C9C3AF"/>
-    </radialGradient>
-  </defs>
-  <rect width="${S}" height="${S}" fill="${PAPER}"/>
-  <rect width="${S}" height="${S}" fill="url(#vig)"/>
-
-  <!-- 인장만 남긴다. 서식지 괘선을 넣으면 플랫폼이 아이콘을 원형·둥근사각으로
-       마스킹할 때 짧은 호로 잘려서 실수처럼 보인다. -->
-  <g transform="translate(${c} ${c}) rotate(-11)">
-    <circle r="306" fill="none" stroke="${SEAL}" stroke-width="36"/>
-    <text x="0" y="0" font-family="${HANJA}" font-size="412"
-          text-anchor="middle" dominant-baseline="central" fill="${SEAL}">秘</text>
-  </g>
-</svg>`;
 }
 
 // ── 대표 이미지 ────────────────────────────────────────────────────
@@ -155,16 +130,6 @@ function render(svg, width, dest, fontFiles) {
 
 const fontFiles = await ensureFonts();
 fs.mkdirSync(OUT, { recursive: true });
-
-// 마스터 SVG 도 함께 남긴다 — 규격이 바뀌면 이걸로 다시 뽑는다
-const icon = iconSvg();
-fs.writeFileSync(path.join(OUT, "icon.svg"), icon);
-
-console.log("\n앱 아이콘 (정사각)");
-for (const s of [1024, 512, 256, 192]) {
-  const size = render(icon, s, path.join(OUT, `icon-${s}.png`), fontFiles);
-  console.log(`  icon-${s}.png`.padEnd(22), `${(size / 1024).toFixed(0)}KB`);
-}
 
 console.log("\n대표 이미지 (가로형)");
 for (const [w, h] of [
