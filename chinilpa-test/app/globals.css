@@ -1,0 +1,612 @@
+@import "tailwindcss";
+
+/* ─────────────────────────────────────────────────────────────────────
+   친일파 테스트 — 1940년대 관공서 서식을 흉내낸 디자인.
+   초안(HTML)의 종이·먹·인장 톤을 그대로 옮겼다.
+   ───────────────────────────────────────────────────────────────────── */
+
+:root {
+  --paper: #d8d3c2;
+  --paper-deep: #c9c3af;
+  --ink: #1c1f26;
+  --ink-soft: #4a4f5a;
+  --ink-faint: #787c82;
+  --rule: #b0a992;
+  --seal: #8e2b1f;
+  --serif: "Nanum Myeongjo", "Noto Serif KR", Batang, serif;
+  --sans: -apple-system, Pretendard, "Apple SD Gothic Neo", "Malgun Gothic",
+    "Noto Sans KR", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  min-height: 100vh;
+  background-image: linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.055),
+      rgba(0, 0, 0, 0) 22%
+    ),
+    radial-gradient(120% 70% at 50% -10%, rgba(0, 0, 0, 0.07), rgba(0, 0, 0, 0) 60%);
+}
+
+#grain {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  mix-blend-mode: multiply;
+  z-index: 99;
+}
+
+.sheet {
+  max-width: 660px;
+  margin: 0 auto;
+  min-height: 100vh;
+  padding: 0 26px 90px;
+  border-left: 1px solid var(--rule);
+  border-right: 1px solid var(--rule);
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.028) 0 10px,
+    rgba(0, 0, 0, 0) 10px
+  );
+  position: relative;
+}
+@media (max-width: 520px) {
+  .sheet {
+    padding: 0 18px 70px;
+    border-left: none;
+    border-right: none;
+  }
+}
+
+/* ── 서식 머리 ── */
+.formhead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 0 9px;
+  border-bottom: 2px solid var(--ink);
+  margin-bottom: 2px;
+}
+.rule-thin {
+  height: 1px;
+  background: var(--rule);
+  margin-bottom: 26px;
+}
+.formno {
+  font-family: var(--serif);
+  font-size: 12px;
+  letter-spacing: 0.32em;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+}
+.secret {
+  font-family: var(--serif);
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--seal);
+  border: 1.5px solid var(--seal);
+  border-radius: 2px;
+  padding: 2px 7px;
+  letter-spacing: 0.14em;
+  transform: rotate(-3deg);
+}
+
+/* ── 표지 ── */
+.cover {
+  padding-top: 52px;
+}
+.eyebrow {
+  font-family: var(--serif);
+  font-size: 13px;
+  letter-spacing: 0.5em;
+  color: var(--ink-soft);
+  margin-bottom: 30px;
+}
+h1.title {
+  font-family: var(--serif);
+  font-weight: 800;
+  font-size: clamp(40px, 10.5vw, 66px);
+  line-height: 1.06;
+  letter-spacing: -0.02em;
+  margin-bottom: 20px;
+}
+h1.title em {
+  font-style: normal;
+  display: block;
+  color: var(--seal);
+}
+.sub {
+  font-family: var(--serif);
+  font-size: clamp(16px, 4vw, 19px);
+  line-height: 1.75;
+  color: var(--ink-soft);
+  max-width: 30em;
+  margin-bottom: 34px;
+}
+.premise {
+  border-left: 3px solid var(--ink);
+  padding: 14px 0 14px 16px;
+  font-size: 14.5px;
+  line-height: 1.95;
+  color: var(--ink-soft);
+  margin-bottom: 38px;
+}
+.premise b {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: inherit;
+}
+.btn {
+  display: block;
+  width: 100%;
+  padding: 19px 20px;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--serif);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  transition: transform 0.16s ease, background 0.16s ease;
+}
+.btn:hover {
+  background: #000;
+  transform: translateY(-2px);
+}
+.btn:focus-visible,
+button:focus-visible,
+a:focus-visible {
+  outline: 2.5px solid var(--seal);
+  outline-offset: 3px;
+}
+.btn-ghost {
+  display: block;
+  width: 100%;
+  padding: 15px;
+  border: 1.5px solid var(--ink);
+  font-family: var(--serif);
+  font-size: 15px;
+  letter-spacing: 0.1em;
+  text-align: center;
+  transition: background 0.16s;
+}
+.btn-ghost:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+.counted {
+  margin-top: 16px;
+  text-align: center;
+  font-size: 12.5px;
+  color: var(--ink-faint);
+  letter-spacing: 0.04em;
+  min-height: 1.2em;
+}
+
+/* ── 문항 ── */
+.qmeta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding-top: 34px;
+  margin-bottom: 14px;
+}
+.stage {
+  font-family: var(--serif);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.28em;
+}
+.year {
+  font-family: var(--serif);
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--ink);
+}
+.qbody {
+  font-family: var(--serif);
+  font-size: clamp(18px, 4.6vw, 21px);
+  line-height: 1.85;
+  padding: 20px 0 30px;
+  border-top: 1px solid var(--rule);
+}
+.qbody strong {
+  font-weight: 800;
+  box-shadow: inset 0 -0.42em 0 rgba(142, 43, 31, 0.16);
+}
+.opts {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+.opt {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  text-align: left;
+  width: 100%;
+  padding: 17px 16px;
+  border: 1px solid var(--rule);
+  background: rgba(255, 255, 255, 0.24);
+  font-size: 15.5px;
+  line-height: 1.66;
+  transition: border-color 0.14s, background 0.14s, transform 0.14s;
+}
+.opt:hover {
+  border-color: var(--ink);
+  background: rgba(255, 255, 255, 0.5);
+  transform: translateX(3px);
+}
+.opt .num {
+  font-family: var(--serif);
+  font-weight: 800;
+  font-size: 16px;
+  color: var(--seal);
+  flex: 0 0 auto;
+  line-height: 1.6;
+}
+.track {
+  display: flex;
+  gap: 5px;
+  margin-top: 34px;
+}
+.track i {
+  flex: 1;
+  height: 4px;
+  background: var(--rule);
+  transition: background 0.3s;
+}
+.track i.on {
+  background: var(--ink);
+}
+.track i.cur {
+  background: var(--seal);
+}
+.backlink {
+  margin-top: 18px;
+  font-size: 13px;
+  color: var(--ink-faint);
+  letter-spacing: 0.04em;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.backlink:hover {
+  color: var(--ink-soft);
+}
+
+/* ── 에필로그 표식 ── */
+.epimark {
+  font-family: var(--serif);
+  font-size: 12px;
+  letter-spacing: 0.46em;
+  color: var(--seal);
+  padding-top: 34px;
+  margin-bottom: -18px;
+}
+
+/* ── 결과 ── */
+.rlabel {
+  font-family: var(--serif);
+  font-size: 12px;
+  letter-spacing: 0.46em;
+  color: var(--ink-soft);
+  padding-top: 40px;
+  margin-bottom: 8px;
+}
+.rname {
+  font-family: var(--serif);
+  font-weight: 800;
+  font-size: clamp(38px, 10vw, 58px);
+  line-height: 1.1;
+  margin-bottom: 10px;
+}
+.rquote {
+  font-family: var(--serif);
+  font-size: clamp(17px, 4.4vw, 20px);
+  color: var(--seal);
+  margin-bottom: 26px;
+}
+.seal {
+  width: 112px;
+  height: 112px;
+  margin: 6px 0 30px;
+  animation: stampin 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.1) both;
+  animation-delay: 0.25s;
+}
+.seal svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+@keyframes stampin {
+  0% {
+    opacity: 0;
+    transform: scale(2.5) rotate(6deg);
+  }
+  62% {
+    opacity: 1;
+    transform: scale(0.94) rotate(-11deg);
+  }
+  100% {
+    opacity: 0.9;
+    transform: scale(1) rotate(-11deg);
+  }
+}
+.rdesc {
+  font-size: 16px;
+  line-height: 2.02;
+  color: var(--ink);
+  margin-bottom: 26px;
+}
+.rdesc p + p {
+  margin-top: 15px;
+}
+.hist {
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+  padding: 17px 0;
+  font-size: 14px;
+  line-height: 1.85;
+  color: var(--ink-soft);
+  margin-bottom: 30px;
+}
+.hist b {
+  font-family: var(--serif);
+  color: var(--ink);
+}
+.counter {
+  background: rgba(28, 31, 38, 0.055);
+  border-left: 3px solid var(--seal);
+  padding: 16px 18px;
+  font-size: 14.5px;
+  line-height: 1.85;
+  margin-bottom: 34px;
+}
+.epilogue-echo {
+  border-left: 3px solid var(--ink);
+  padding: 14px 0 14px 16px;
+  font-family: var(--serif);
+  font-size: 15.5px;
+  line-height: 1.9;
+  color: var(--ink-soft);
+  margin-bottom: 30px;
+}
+.epilogue-echo b {
+  color: var(--ink);
+}
+.metric {
+  margin-bottom: 12px;
+}
+.metric .mlabel {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13.5px;
+  margin-bottom: 6px;
+}
+.metric .mlabel span:last-child {
+  font-family: var(--serif);
+  font-weight: 700;
+}
+.bar {
+  height: 9px;
+  background: var(--paper-deep);
+  position: relative;
+}
+.bar i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--ink-soft);
+  transition: width 0.8s ease;
+}
+.bar.mine i {
+  background: var(--seal);
+}
+.bigstat {
+  font-family: var(--serif);
+  font-size: clamp(28px, 7vw, 38px);
+  font-weight: 800;
+  line-height: 1.3;
+  margin: 26px 0 8px;
+}
+.bigstat em {
+  font-style: normal;
+  color: var(--seal);
+}
+.note {
+  font-size: 12.5px;
+  color: var(--ink-faint);
+  line-height: 1.7;
+  margin-top: 26px;
+}
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 34px;
+}
+h3.sechead {
+  font-family: var(--serif);
+  font-size: 14px;
+  letter-spacing: 0.3em;
+  color: var(--ink-soft);
+  padding-top: 34px;
+  margin-bottom: 16px;
+  border-top: 2px solid var(--ink);
+}
+.hidden {
+  display: none;
+}
+
+/* ── 글 페이지(안내·FAQ·출처 등) ── */
+.article {
+  padding-top: 40px;
+}
+.article h1 {
+  font-family: var(--serif);
+  font-weight: 800;
+  font-size: clamp(30px, 7.5vw, 42px);
+  line-height: 1.2;
+  margin-bottom: 14px;
+}
+.article .lede {
+  font-family: var(--serif);
+  font-size: 16.5px;
+  line-height: 1.85;
+  color: var(--ink-soft);
+  margin-bottom: 34px;
+}
+.article h2 {
+  font-family: var(--serif);
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  padding-top: 30px;
+  margin-bottom: 12px;
+  border-top: 1px solid var(--rule);
+}
+.article h3 {
+  font-family: var(--serif);
+  font-size: 16px;
+  font-weight: 700;
+  margin: 22px 0 8px;
+}
+.article p {
+  font-size: 15.5px;
+  line-height: 1.95;
+  color: var(--ink);
+  margin-bottom: 14px;
+}
+.article ul,
+.article ol {
+  margin: 0 0 16px 1.1em;
+}
+.article li {
+  font-size: 15.5px;
+  line-height: 1.9;
+  margin-bottom: 7px;
+}
+.article a {
+  color: var(--seal);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.article dl {
+  margin-bottom: 8px;
+}
+.article dt {
+  font-family: var(--serif);
+  font-size: 16px;
+  font-weight: 800;
+  margin: 22px 0 7px;
+}
+.article dd {
+  font-size: 15.5px;
+  line-height: 1.95;
+  color: var(--ink-soft);
+}
+.article .src {
+  border-left: 3px solid var(--rule);
+  padding: 12px 0 12px 15px;
+  font-size: 14px;
+  line-height: 1.85;
+  color: var(--ink-soft);
+  margin-bottom: 16px;
+}
+
+/* ── 푸터 ── */
+.sheet-tail {
+  max-width: 660px;
+  margin: 0 auto;
+  padding: 0 26px 54px;
+}
+@media (max-width: 520px) {
+  .sheet-tail {
+    padding: 0 18px 40px;
+  }
+}
+.visitor-count {
+  text-align: center;
+  font-size: 12.5px;
+  color: var(--ink-faint);
+  letter-spacing: 0.03em;
+}
+.visitor-count b {
+  color: var(--ink-soft);
+  font-family: var(--serif);
+  font-weight: 700;
+}
+.site-footer {
+  border-top: 1px solid var(--rule);
+  margin-top: 22px;
+  padding-top: 20px;
+}
+.site-footer nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 18px;
+  margin-bottom: 14px;
+}
+.site-footer a {
+  font-size: 13px;
+  color: var(--ink-soft);
+  text-decoration: none;
+  letter-spacing: 0.02em;
+}
+.site-footer a:hover {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.site-footer .copy {
+  text-align: center;
+  font-size: 12px;
+  color: var(--ink-faint);
+  line-height: 1.8;
+}
+.share-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--rule);
+  padding: 7px 14px;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  letter-spacing: 0.04em;
+  transition: border-color 0.14s, color 0.14s;
+}
+.share-inline:hover {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
