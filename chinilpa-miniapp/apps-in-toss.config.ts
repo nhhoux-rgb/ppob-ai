@@ -1,7 +1,10 @@
 import { defineConfig } from "@apps-in-toss/web-framework/config";
 
 export default defineConfig({
-  appName: "chinilpa-test",
+  // 토스 개발자센터에 등록한 appName 과 반드시 같아야 한다. 이 값이 번들
+  // 안 bundle.json 에 박혀서 업로드 시 대조되므로, 파일 이름을 바꾸는 것으로는
+  // 해결되지 않는다.
+  appName: "cinilpa",
   brand: {
     // 서식지의 인장 색. 웹앱 globals.css 의 --seal 과 같다.
     primaryColor: "#8E2B1F",
