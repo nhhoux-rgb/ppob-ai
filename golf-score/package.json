@@ -8,6 +8,7 @@
     "build": "vite build && ait build",
     "build:web": "vite build",
     "smoke": "node test/smoke.mjs",
+    "standalone": "vite build && node scripts/standalone.mjs",
     "logo": "node brand/logo.mjs",
     "shots": "node brand/screenshots.mjs",
     "preview": "vite preview",

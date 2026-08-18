@@ -11,6 +11,14 @@ const KEY_ROUNDS = "golf:rounds";
 const KEY_DRAFT = "golf:draft";
 const KEY_PREFS = "golf:prefs";
 
+/**
+ * 마지막 안전망. 샌드박스 iframe 처럼 localStorage 마저 막힌 곳에서는 쓰기가
+ * 조용히 사라지는데, 그러면 방금 끝낸 라운드를 저장하고 다시 읽는 순간
+ * 기록이 없어진 것처럼 보인다. 탭을 닫으면 함께 사라지지만, 적어도 앱이
+ * 켜져 있는 동안은 앞뒤가 맞는다.
+ */
+const memory = new Map<string, string>();
+
 async function read(key: string): Promise<string | null> {
   try {
     return await Storage.getItem(key);
@@ -18,7 +26,7 @@ async function read(key: string): Promise<string | null> {
     try {
       return localStorage.getItem(key);
     } catch {
-      return null;
+      return memory.get(key) ?? null;
     }
   }
 }
@@ -30,7 +38,7 @@ async function write(key: string, value: string): Promise<void> {
     try {
       localStorage.setItem(key, value);
     } catch {
-      // 저장소가 아예 막힌 환경. 화면의 기록은 살아 있으니 조용히 넘어간다.
+      memory.set(key, value);
     }
   }
 }
@@ -42,7 +50,7 @@ async function remove(key: string): Promise<void> {
     try {
       localStorage.removeItem(key);
     } catch {
-      // 위와 같다
+      memory.delete(key);
     }
   }
 }
