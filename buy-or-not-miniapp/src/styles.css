@@ -1,0 +1,555 @@
+/* 살까 말까 판독기 — 토스 미니앱.
+   화면 전체가 영수증 한 장이다. 값을 넣고 문항 셋을 고르면 그 자리에서
+   판정이 인쇄된다. 그래서 글꼴은 고정폭, 구분선은 점선, 모서리는 톱니다. */
+
+:root {
+  --desk: #e6e4dd; /* 영수증이 놓인 바닥 */
+  --paper: #fdfdfb;
+  --ink: #1b1b1a;
+  --ink-soft: #6d6c66;
+  --ink-faint: #9a9892;
+  --rule: #cfcdc5;
+  --tint: #f4f3ee;
+  --stamp: #c8322a; /* apps-in-toss.config.ts 의 primaryColor 와 같다 */
+  --ok: #1f6f4e;
+  --hold: #b3701a;
+
+  /* 한글이 있는 고정폭 글꼴이라야 금액이 자릿수대로 선다 */
+  --mono: "Nanum Gothic Coding", ui-monospace, SFMono-Regular, Menlo,
+    "Apple SD Gothic Neo", monospace;
+  --serif: "Noto Serif KR", serif;
+
+  /* 토스가 주는 값으로 App.tsx 에서 덮어쓴다. 토스 밖에서는 이 기본값 */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* 종이는 어두워지지 않는다. 바닥만 어두워진다. */
+    --desk: #2a2a28;
+  }
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  background: var(--desk);
+  min-height: 100vh;
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 15px;
+  line-height: 1.6;
+  /* 고정폭 글꼴에서 한글을 그냥 두면 "차리십/시오" 처럼 낱말 가운데가 잘린다 */
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  -webkit-font-smoothing: antialiased;
+  /* 웹뷰에서 길게 눌렀을 때 선택 메뉴가 뜨지 않도록 */
+  -webkit-user-select: none;
+  user-select: none;
+  overscroll-behavior-y: none;
+}
+
+/* 짧은 영수증은 바닥 가운데에 놓인다. margin:auto 로 가운데를 잡아야
+   내용이 화면보다 길어졌을 때 위쪽이 잘리지 않는다. */
+body {
+  display: flex;
+  padding: var(--safe-top) 0 var(--safe-bottom);
+}
+
+/* 리액트가 붙는 칸이 본문과 영수증 사이에 하나 더 있다. 여기까지 늘려 주지
+   않으면 .slip 의 margin:auto 가 가운데를 잡을 여백을 못 찾는다. */
+#root {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+input {
+  font: inherit;
+  color: inherit;
+  border: none;
+  background: none;
+  outline: none;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* ── 영수증 ─────────────────────────────────────────────────────── */
+
+.slip {
+  position: relative;
+  /* 화면 높이를 채우지 않는다. 짧은 영수증은 짧게 끝나야 영수증으로 보인다. */
+  width: 100%;
+  max-width: 400px;
+  margin: auto;
+  padding: 16px 22px 26px;
+  background: var(--paper);
+  box-shadow: 0 0 24px rgba(0, 0, 0, 0.08);
+}
+
+/* 톱니 모서리 — 바닥색 삼각형이 종이를 물어뜯는다 */
+.edge {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 9px;
+  background-image: linear-gradient(45deg, var(--desk) 50%, transparent 50%),
+    linear-gradient(-45deg, var(--desk) 50%, transparent 50%);
+  background-size: 14px 9px;
+  background-repeat: repeat-x;
+}
+
+.edge-top {
+  top: 0;
+  transform: scaleY(-1);
+}
+
+.edge-bottom {
+  bottom: 0;
+}
+
+/* ── 머리 ───────────────────────────────────────────────────────── */
+
+.head {
+  padding-top: 14px;
+  text-align: center;
+}
+
+.shop {
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+
+.tagline {
+  margin-top: 5px;
+  font-size: 10.5px;
+  color: var(--ink-faint);
+  letter-spacing: 0.5px;
+}
+
+.rule {
+  margin: 16px 0;
+  border-top: 1px dashed var(--rule);
+}
+
+.rule.dim {
+  border-top-style: dotted;
+}
+
+/* ── 금액 입력 ──────────────────────────────────────────────────── */
+
+.ask {
+  margin-bottom: 18px;
+  font-size: 15px;
+  text-align: center;
+}
+
+.amount {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--ink);
+}
+
+.amount-in {
+  flex: 1;
+  min-width: 0;
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  text-align: right;
+}
+
+.amount-in::placeholder {
+  color: #dcdad3;
+}
+
+.amount-won {
+  font-size: 18px;
+  color: var(--ink-soft);
+}
+
+.quick {
+  display: flex;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.chip {
+  flex: 1;
+  padding: 9px 0;
+  font-size: 12px;
+  color: var(--ink-soft);
+  border: 1px solid var(--rule);
+}
+
+.chip:active {
+  color: var(--paper);
+  background: var(--ink);
+  border-color: var(--ink);
+}
+
+.chip-clear {
+  flex: 0 0 46px;
+  color: var(--ink-faint);
+}
+
+.field {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.field-label {
+  flex: 0 0 auto;
+  font-size: 12px;
+  color: var(--ink-soft);
+  letter-spacing: 2px;
+}
+
+.field-in {
+  flex: 1;
+  min-width: 0;
+  font-size: 15px;
+}
+
+.field-in::placeholder {
+  color: var(--ink-faint);
+}
+
+.go {
+  display: block;
+  width: 100%;
+  margin-top: 24px;
+  padding: 16px 0;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--paper);
+  background: var(--ink);
+}
+
+.go:disabled {
+  color: var(--ink-faint);
+  background: var(--tint);
+  cursor: default;
+  letter-spacing: 0;
+}
+
+.go:not(:disabled):active {
+  background: #3d3c39;
+}
+
+.fine {
+  margin-top: 16px;
+  font-size: 10.5px;
+  line-height: 1.7;
+  color: var(--ink-faint);
+  text-align: center;
+}
+
+/* ── 문항 ───────────────────────────────────────────────────────── */
+
+.qno {
+  font-size: 11px;
+  color: var(--ink-faint);
+  letter-spacing: 2px;
+  text-align: center;
+}
+
+.q {
+  margin-top: 10px;
+  font-size: 21px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.qnote {
+  margin-top: 8px;
+  margin-bottom: 22px;
+  font-size: 11.5px;
+  color: var(--ink-faint);
+  text-align: center;
+}
+
+.options {
+  display: grid;
+  gap: 8px;
+}
+
+.opt {
+  display: flex;
+  gap: 11px;
+  align-items: center;
+  width: 100%;
+  padding: 13px 12px;
+  text-align: left;
+  border: 1px solid var(--rule);
+}
+
+.opt:active,
+.opt.on {
+  border-color: var(--ink);
+  background: var(--tint);
+}
+
+.opt-no {
+  flex: 0 0 22px;
+  height: 22px;
+  font-size: 11px;
+  line-height: 22px;
+  color: var(--ink-faint);
+  text-align: center;
+  border: 1px solid var(--rule);
+}
+
+.opt-body {
+  display: block;
+}
+
+.opt-label {
+  display: block;
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.opt-sub {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--ink-faint);
+}
+
+.back {
+  display: block;
+  width: 100%;
+  margin-top: 18px;
+  padding: 10px 0;
+  font-size: 12.5px;
+  color: var(--ink-faint);
+  text-align: center;
+}
+
+.back.wide {
+  border: 1px solid var(--rule);
+  color: var(--ink-soft);
+}
+
+.steps {
+  display: flex;
+  gap: 5px;
+  justify-content: center;
+  margin-top: 26px;
+}
+
+.dot {
+  width: 5px;
+  height: 5px;
+  background: var(--rule);
+  border-radius: 50%;
+}
+
+.dot.on {
+  background: var(--ink-soft);
+}
+
+/* ── 결과 ───────────────────────────────────────────────────────── */
+
+.result {
+  padding-top: 4px;
+}
+
+.stamp {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: fit-content;
+  margin: 10px auto 22px;
+  padding: 9px 20px 12px;
+  border: 3px solid currentColor;
+  border-radius: 4px;
+  transform: rotate(-5deg);
+  /* 고무도장은 잉크가 고르게 먹지 않는다 */
+  opacity: 0.92;
+}
+
+.stamp.ok {
+  color: var(--ok);
+}
+
+.stamp.hold {
+  color: var(--hold);
+}
+
+.stamp.no {
+  color: var(--stamp);
+}
+
+.stamp-small {
+  font-size: 11px;
+  letter-spacing: 5px;
+  text-indent: 5px;
+}
+
+.stamp-big {
+  font-family: var(--serif);
+  font-size: 38px;
+  font-weight: 900;
+  line-height: 1.15;
+  letter-spacing: 6px;
+  text-indent: 6px;
+}
+
+.ledger {
+  margin-top: 4px;
+}
+
+.row {
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  padding: 3px 0;
+  font-size: 13px;
+}
+
+.row dt {
+  color: var(--ink-soft);
+}
+
+.row dd {
+  text-align: right;
+}
+
+.row.strong dd {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.metrics {
+  display: grid;
+  gap: 14px;
+}
+
+.metric-top {
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.metric-k {
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+.metric-v {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.gauge {
+  margin-top: 5px;
+  height: 6px;
+  background: #eceae4;
+}
+
+.gauge i {
+  display: block;
+  height: 100%;
+}
+
+.gauge.ok i {
+  background: var(--ok);
+}
+
+.gauge.mid i {
+  background: var(--hold);
+}
+
+.gauge.no i {
+  background: var(--stamp);
+}
+
+.metric-note {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--ink-faint);
+}
+
+.reasons-label {
+  font-size: 10.5px;
+  color: var(--ink-faint);
+  letter-spacing: 4px;
+}
+
+.reason {
+  margin-top: 9px;
+  padding-left: 11px;
+  font-size: 13.5px;
+  line-height: 1.75;
+  border-left: 2px solid var(--rule);
+}
+
+.sentence {
+  margin-top: 18px;
+  padding: 13px 14px;
+  font-size: 14.5px;
+  font-weight: 700;
+  line-height: 1.75;
+  background: var(--tint);
+}
+
+.barcode {
+  display: flex;
+  gap: 2px;
+  align-items: stretch;
+  justify-content: center;
+  height: 34px;
+  margin-top: 14px;
+}
+
+.barcode i {
+  display: block;
+  background: var(--ink);
+}
+
+.serial {
+  margin-top: 7px;
+  font-size: 10.5px;
+  color: var(--ink-faint);
+  letter-spacing: 1px;
+  text-align: center;
+}
+
+.actions {
+  display: grid;
+  gap: 8px;
+  margin-top: 22px;
+}
+
+.actions .go {
+  margin-top: 0;
+}
+
+.actions .back {
+  margin-top: 0;
+}

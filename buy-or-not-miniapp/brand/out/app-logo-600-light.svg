@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="600" viewBox="0 0 600 600">
+    <rect width="600" height="600" fill="#FDFDFB"/>
+    
+  <rect x="58" y="58" width="484" height="484" rx="30"
+        fill="none" stroke="#C8322A" stroke-width="20"/>
+  <rect x="88" y="88" width="424" height="424" rx="14"
+        fill="none" stroke="#C8322A" stroke-width="5"/>
+    <text x="307" y="222" font-family="Noto Serif KR" font-size="144" font-weight="900"
+          text-anchor="middle" dominant-baseline="central" fill="#C8322A"
+          letter-spacing="14">살까</text>
+    <text x="307" y="382" font-family="Noto Serif KR" font-size="144" font-weight="900"
+          text-anchor="middle" dominant-baseline="central" fill="#C8322A"
+          letter-spacing="14">말까</text></svg>
