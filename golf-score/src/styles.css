@@ -1,0 +1,882 @@
+/* 골프 스코어 계산기 — 토스 미니앱.
+   필드에서 햇빛을 마주 보고 쓰는 앱이라 밝은 바탕에 진한 글씨로 간다.
+   터치 목표는 전부 44px 이상. 장갑 낀 손으로도 눌러야 한다. */
+
+:root {
+  --bg: #f2f5f1;
+  --card: #ffffff;
+  --line: #dde4db;
+  --line-soft: #eaefe8;
+  --text: #16221a;
+  --muted: #6b7c70;
+  --green: #1f7a46;
+  --green-deep: #176036;
+  --green-soft: #e7f3ec;
+  --bad: #c02f26;
+  --bad-soft: #fdecea;
+  --gold: #9a6b06;
+
+  --sans: -apple-system, Pretendard, "Apple SD Gothic Neo", "Malgun Gothic",
+    "Noto Sans KR", sans-serif;
+
+  /* 토스가 주입하는 값으로 App.tsx 에서 덮어쓴다. 토스 밖에서는 이 기본값 */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+  /* 웹뷰에서 길게 눌렀을 때 텍스트 선택 메뉴가 뜨지 않도록 */
+  -webkit-user-select: none;
+  user-select: none;
+  overscroll-behavior-y: none;
+}
+
+input {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+button {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.app {
+  max-width: 560px;
+  margin: 0 auto;
+  min-height: 100vh;
+  padding: var(--safe-top) 16px calc(var(--safe-bottom) + 40px);
+}
+
+/* ── 머리 ── */
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 2px 12px;
+}
+.brand {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--green-deep);
+}
+.top-back {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--muted);
+  padding: 8px 10px;
+}
+.loading {
+  padding: 60px 0;
+  text-align: center;
+  color: var(--muted);
+  font-size: 14px;
+}
+.foot {
+  margin-top: 32px;
+  text-align: center;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.sec {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+  margin: 26px 2px 10px;
+}
+
+/* ── 버튼 ── */
+.btn {
+  display: block;
+  width: 100%;
+  min-height: 52px;
+  border-radius: 14px;
+  background: var(--green);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+.btn:active {
+  background: var(--green-deep);
+}
+.btn.big {
+  min-height: 58px;
+  font-size: 17px;
+}
+.btn.ghost {
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--line);
+}
+.btn.ghost:active {
+  background: var(--line-soft);
+}
+.btn.plain {
+  background: none;
+  color: var(--muted);
+  font-weight: 700;
+  min-height: 46px;
+}
+.btn.danger {
+  background: var(--bad);
+}
+.btn.plain.danger {
+  background: none;
+  color: var(--bad);
+}
+
+/* ── 홈 ── */
+.resume {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: var(--green-soft);
+  border: 1px solid #cfe6d8;
+  border-radius: 14px;
+  padding: 13px 15px;
+  margin-bottom: 10px;
+}
+.resume-tag {
+  display: block;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--green);
+  margin-bottom: 3px;
+}
+.resume-main {
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.panel {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px 14px 8px;
+  margin-top: 14px;
+}
+.panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.panel-head b {
+  font-size: 14px;
+  color: var(--text);
+}
+
+.empty {
+  padding: 28px 0;
+  text-align: center;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.rounds {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.round-card {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 13px 15px;
+  text-align: left;
+}
+.round-card:active {
+  background: var(--line-soft);
+}
+.rc-course {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 3px;
+}
+.rc-meta {
+  font-size: 12px;
+  color: var(--muted);
+}
+.rc-right {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.rc-right b {
+  font-size: 22px;
+  font-weight: 800;
+}
+.rc-right span,
+.total-par,
+.tr-delta {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.over {
+  color: var(--bad);
+}
+.under {
+  color: var(--green);
+}
+
+/* ── 설정 ── */
+.field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  min-height: 56px;
+}
+.field > span {
+  font-size: 14px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.field input {
+  flex: 1;
+  min-width: 0;
+  text-align: right;
+  border: none;
+  background: none;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  outline: none;
+}
+.field input::placeholder {
+  color: #b4c0b7;
+  font-weight: 500;
+}
+.recent-courses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: -2px 2px 12px;
+}
+.hint {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--muted);
+  margin: 6px 4px 0;
+}
+.setup-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 22px;
+}
+
+/* ── 세그먼트 · 스테퍼 ── */
+.seg {
+  display: flex;
+  gap: 4px;
+  background: var(--line-soft);
+  border-radius: 11px;
+  padding: 3px;
+}
+.seg-item {
+  padding: 9px 12px;
+  border-radius: 9px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.seg-item.on {
+  background: var(--card);
+  color: var(--green-deep);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.step-btn {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  background: var(--line-soft);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+}
+.step-btn:disabled {
+  color: #c3ccc5;
+}
+.step-val {
+  min-width: 40px;
+  text-align: center;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+/* ── 홀 입력 ── */
+.hole-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.nav-btn {
+  width: 52px;
+  height: 48px;
+  border-radius: 13px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  font-size: 15px;
+  color: var(--text);
+}
+.nav-btn:disabled {
+  color: #c9d2cb;
+  background: var(--line-soft);
+  border-color: var(--line-soft);
+}
+.hole-title {
+  font-size: 17px;
+  font-weight: 700;
+}
+.hole-title b {
+  font-size: 27px;
+  font-weight: 800;
+  color: var(--green-deep);
+  margin-right: 2px;
+}
+
+.par-row,
+.putt-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 10px 14px;
+  margin-bottom: 10px;
+}
+.par-row .label,
+.putt-row .label {
+  font-size: 14px;
+  font-weight: 800;
+  min-width: 34px;
+}
+.par-row .seg-item {
+  min-width: 44px;
+  text-align: center;
+}
+.running {
+  margin-left: auto;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.shots {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 6px 12px 12px;
+  margin-bottom: 10px;
+}
+.shot-block + .shot-block {
+  border-top: 1px solid var(--line-soft);
+}
+.shot-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 0;
+}
+.shot-no {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+  width: 62px;
+  flex-shrink: 0;
+}
+
+.chip {
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 12px;
+  background: var(--line-soft);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.chip.open {
+  outline: 2px solid var(--green);
+  outline-offset: -2px;
+}
+.chip.club {
+  min-width: 66px;
+  justify-content: center;
+}
+.chip.res {
+  flex: 1;
+  justify-content: center;
+}
+.chip.res.ok {
+  background: var(--green-soft);
+  color: var(--green-deep);
+}
+.chip.res.miss {
+  background: var(--bad-soft);
+  color: var(--bad);
+}
+.chip.del {
+  min-width: 44px;
+  padding: 0;
+  justify-content: center;
+  /* 라운드 중 잘못 눌리면 안 되는 버튼이라 눈에 덜 띄게 둔다 */
+  color: #b6c1b9;
+  font-size: 13px;
+  background: none;
+}
+.chip.small {
+  min-height: 36px;
+  padding: 0 12px;
+  font-size: 13px;
+  background: var(--card);
+  border: 1px solid var(--line);
+}
+.chip.small.on {
+  background: var(--green-soft);
+  border-color: #cfe6d8;
+  color: var(--green-deep);
+}
+.pen {
+  font-style: normal;
+  font-size: 12px;
+  font-weight: 800;
+  opacity: 0.75;
+}
+
+.picker {
+  padding: 2px 0 10px;
+}
+.pick-group + .pick-group {
+  margin-top: 8px;
+}
+.pick-title {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--muted);
+  margin: 0 2px 5px;
+}
+.pick-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+.pick-grid.two {
+  grid-template-columns: repeat(2, 1fr);
+}
+.pick {
+  min-height: 44px;
+  border-radius: 11px;
+  background: var(--line-soft);
+  font-size: 13px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 0 4px;
+}
+.pick.wide {
+  grid-column: span 4;
+  background: var(--green-soft);
+  color: var(--green-deep);
+}
+.pick.on {
+  outline: 2px solid var(--green);
+  outline-offset: -2px;
+}
+
+.add-shot {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  margin-top: 4px;
+  border-radius: 11px;
+  border: 1px dashed var(--line);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.hole-score {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 0 16px;
+}
+.hole-score b {
+  font-size: 40px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.hole-score span {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.hole-score.over b {
+  color: var(--bad);
+}
+.hole-score.under b {
+  color: var(--green);
+}
+
+.play-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ── 확인 시트 ── */
+.ask {
+  position: fixed;
+  inset: 0;
+  background: rgba(12, 20, 15, 0.45);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 20;
+}
+.ask-box {
+  width: 100%;
+  max-width: 560px;
+  background: var(--card);
+  border-radius: 20px 20px 0 0;
+  padding: 22px 16px calc(var(--safe-bottom) + 16px);
+}
+.ask-box p {
+  font-size: 15px;
+  line-height: 1.6;
+  text-align: center;
+  margin-bottom: 18px;
+}
+.ask-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ── 결과 ── */
+.rv-head {
+  margin-bottom: 12px;
+}
+.rv-course {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.rv-when {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 3px;
+}
+
+.total {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 20px 16px 16px;
+  text-align: center;
+}
+.total-main {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 4px;
+}
+.total-main b {
+  font-size: 52px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+.total-main span {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.total-par {
+  margin-top: 6px;
+  font-size: 15px;
+}
+.total-sub {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.halves {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+.halves > div {
+  flex: 1;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 11px;
+  text-align: center;
+}
+.halves span {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 2px;
+}
+.halves b {
+  font-size: 19px;
+  font-weight: 800;
+}
+
+.headline {
+  margin-top: 12px;
+  background: var(--green-soft);
+  border: 1px solid #cfe6d8;
+  border-radius: 14px;
+  padding: 15px;
+  font-size: 15px;
+  line-height: 1.65;
+  font-weight: 600;
+  color: #14442a;
+}
+
+/* ── 스코어카드 ── */
+.card-wrap {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.card {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+  table-layout: fixed;
+  font-variant-numeric: tabular-nums;
+}
+.card th,
+.card td {
+  text-align: center;
+  padding: 7px 0;
+  font-size: 12px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.card tr:last-child th,
+.card tr:last-child td {
+  border-bottom: none;
+}
+.card th {
+  color: var(--muted);
+  font-weight: 700;
+  width: 32px;
+}
+.c-hole td,
+.c-hole th {
+  background: var(--line-soft);
+  font-weight: 700;
+}
+.c-par td {
+  color: var(--muted);
+}
+.c-score td {
+  font-size: 14px;
+  font-weight: 800;
+}
+.c-score td.over {
+  color: var(--bad);
+}
+.c-score td.bad {
+  color: #fff;
+  background: var(--bad);
+}
+.c-score td.under {
+  color: var(--green);
+}
+.c-score td.even {
+  color: var(--text);
+}
+.card .sum {
+  background: var(--line-soft);
+  font-weight: 800;
+  color: var(--text);
+}
+
+/* ── 추세 ── */
+.trend {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 15px;
+}
+.trend > p {
+  font-size: 15px;
+  line-height: 1.6;
+  font-weight: 700;
+}
+.trend.better > p {
+  color: var(--green-deep);
+}
+.trend.worse > p {
+  color: var(--bad);
+}
+.trend-rows {
+  margin-top: 12px;
+  border-top: 1px solid var(--line-soft);
+}
+.trend-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--line-soft);
+  font-variant-numeric: tabular-nums;
+}
+.tr-label {
+  flex: 1;
+  font-size: 13px;
+  color: var(--muted);
+}
+.tr-value {
+  font-size: 14px;
+  font-weight: 700;
+}
+.tr-delta {
+  min-width: 46px;
+  text-align: right;
+}
+.tr-delta.good {
+  color: var(--green);
+}
+.tr-delta.bad {
+  color: var(--bad);
+}
+.trend-note {
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.spark-wrap {
+  margin-top: 10px;
+}
+.spark {
+  width: 100%;
+  height: 64px;
+  display: block;
+}
+.spark-line {
+  fill: none;
+  stroke: var(--green);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+.spark-dot {
+  fill: var(--green);
+  opacity: 0.55;
+}
+.spark-dot.last {
+  opacity: 1;
+}
+.spark-axis {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+/* ── 진단 ── */
+.findings {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.finding {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--line);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+.finding.bad {
+  border-left-color: var(--bad);
+}
+.finding.good {
+  border-left-color: var(--green);
+}
+.finding.info {
+  border-left-color: #c3cfc6;
+}
+.f-title {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.f-detail {
+  font-size: 14px;
+  line-height: 1.6;
+  font-weight: 600;
+}
+
+.rv-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 24px;
+}
