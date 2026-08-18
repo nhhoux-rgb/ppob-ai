@@ -5,7 +5,7 @@
  * 두 경로가 섞이지 않도록 읽기·쓰기 모두 같은 판단을 거친다. */
 
 import { Storage } from "@apps-in-toss/web-framework";
-import type { ClubId, ObRule, Round } from "./types";
+import type { ClubId, CustomClub, ObRule, Round } from "./types";
 
 const KEY_ROUNDS = "golf:rounds";
 const KEY_DRAFT = "golf:draft";
@@ -118,6 +118,8 @@ export type Prefs = {
   teeClub: ClubId;
   /** 그 밖의 샷에 미리 깔아 둘 클럽 */
   ironClub: ClubId;
+  /** 붙박이 목록에 없어서 이용자가 직접 더한 클럽 */
+  customClubs: CustomClub[];
 };
 
 export const DEFAULT_PREFS: Prefs = {
@@ -125,6 +127,7 @@ export const DEFAULT_PREFS: Prefs = {
   obRule: "forward_tee",
   teeClub: "Dr",
   ironClub: "7i",
+  customClubs: [],
 };
 
 export async function loadPrefs(): Promise<Prefs> {

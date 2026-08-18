@@ -1,5 +1,6 @@
 import { holeStrokes, holeToPar, roundTotals, isGir, fairwayHit, scoreSpread } from "../.test-build/score.js";
 import { analyze, trendOf, metricsOf } from "../.test-build/analysis.js";
+import { autoShort, clubLabel, clubShort, customClubId, isCustomClub } from "../.test-build/types.js";
 
 let pass = 0, fail = 0;
 function eq(actual, expected, name) {
@@ -35,6 +36,23 @@ eq(isGir(hole(8, 5, [s("Dr", "ob_left"), s("3W"), s("8i")], 2), "forward_tee"), 
    "파5에서 OB 내고 3번 쳐서 올린 것은 파온이 아니다 (벌타 포함 5타째)");
 eq(fairwayHit(hole(8, 3, [s("7i")], 2)), null, "파3은 페어웨이 개념 없음");
 eq(fairwayHit(hole(9, 4, [s("Dr", "rough_left"), s("7i")], 2)), false, "티샷 러프 = 페어웨이 놓침");
+
+console.log("\n[내가 더한 클럽]");
+eq(autoShort("2번 아이언"), "2i", "2번 아이언 → 2i");
+eq(autoShort("7번 우드"), "7W", "7번 우드 → 7W");
+eq(autoShort("4번 유틸"), "4U", "4번 유틸 → 4U");
+eq(autoShort("3 하이브리드"), "3U", "3 하이브리드 → 3U");
+eq(autoShort("58도"), "58", "58도 → 58");
+eq(autoShort("치퍼"), "치퍼", "규칙에 안 걸리면 이름을 그대로 줄인다");
+eq(autoShort("아주 긴 이름의 클럽"), "아주긴이", "  → 네 글자까지만");
+
+const my = customClubId("2번 아이언");
+eq(isCustomClub(my), true, "더한 클럽은 id 로 구분된다");
+eq(isCustomClub("7i"), false, "  → 붙박이 클럽은 아니다");
+eq(clubLabel(my), "2번 아이언", "id 안에 이름이 있어 목록 없이도 읽힌다");
+eq(clubShort(my, [{ label: "2번 아이언", short: "2번" }]), "2번", "줄임말을 고쳐 넣으면 그걸 쓴다");
+eq(clubShort(my, []), "2i", "지운 클럽이어도 이름에서 줄임말을 뽑아 낸다");
+eq(clubLabel("7i"), "7번 아이언", "붙박이 클럽은 그대로");
 
 console.log("\n[라운드 합계]");
 const holes = [

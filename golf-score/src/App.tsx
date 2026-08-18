@@ -9,7 +9,14 @@ import { SafeArea } from "@apps-in-toss/web-framework";
 import Play from "./Play";
 import Review from "./Review";
 import { Segmented, Spark, haptic } from "./ui";
-import { OB_RULE_LABEL, type ObRule, type Round, newRound } from "./types";
+import {
+  OB_RULE_LABEL,
+  type ClubId,
+  type CustomClub,
+  type ObRule,
+  type Round,
+  newRound,
+} from "./types";
 import { roundTotals, toParText } from "./score";
 import {
   DEFAULT_PREFS,
@@ -79,6 +86,34 @@ export default function App() {
     saveDraft(next);
   }, []);
 
+  const updatePrefs = useCallback((next: Prefs) => {
+    setPrefs(next);
+    savePrefs(next);
+  }, []);
+
+  const addClub = useCallback(
+    (club: CustomClub) => {
+      setPrefs((p) => {
+        // 같은 이름이 이미 있으면 새로 넣지 않고 줄임말만 갈아 끼운다
+        const next = {
+          ...p,
+          customClubs: [...p.customClubs.filter((c) => c.label !== club.label), club],
+        };
+        savePrefs(next);
+        return next;
+      });
+    },
+    []
+  );
+
+  const removeClub = useCallback((label: string) => {
+    setPrefs((p) => {
+      const next = { ...p, customClubs: p.customClubs.filter((c) => c.label !== label) };
+      savePrefs(next);
+      return next;
+    });
+  }, []);
+
   function start(input: {
     course: string;
     date: string;
@@ -87,9 +122,7 @@ export default function App() {
     obRule: ObRule;
   }) {
     const round = newRound(input, { teeClub: prefs.teeClub, ironClub: prefs.ironClub });
-    const next = { ...prefs, lastCourse: input.course, obRule: input.obRule };
-    setPrefs(next);
-    savePrefs(next);
+    updatePrefs({ ...prefs, lastCourse: input.course, obRule: input.obRule });
     updateDraft({ round, cursor: 0 });
     setScreen("play");
     window.scrollTo({ top: 0, behavior: "instant" });
@@ -102,6 +135,7 @@ export default function App() {
     const played = draft.round.holes.slice(0, draft.cursor + 1);
     const saved: Round = { ...draft.round, holes: played, finishedAt: Date.now() };
     setRounds(await upsertRound(saved));
+    updatePrefs(rememberClubs(saved, prefs));
     await clearDraft();
     setDraft(null);
     setReviewId(saved.id);
@@ -176,8 +210,11 @@ export default function App() {
         <Play
           round={draft.round}
           cursor={draft.cursor}
+          customClubs={prefs.customClubs}
           onRound={(round) => updateDraft({ ...draft, round })}
           onCursor={(cursor) => updateDraft({ ...draft, cursor })}
+          onAddClub={addClub}
+          onRemoveClub={removeClub}
           onFinish={finish}
           onExit={abandon}
         />
@@ -199,6 +236,39 @@ export default function App() {
       <footer className="foot">기록은 이 기기 안에만 저장됩니다.</footer>
     </div>
   );
+}
+
+/** 가장 많이 나온 값. 표본이 적으면 판단을 미룬다. */
+function mode(values: ClubId[], least: number): ClubId | null {
+  const count = new Map<ClubId, number>();
+  for (const v of values) count.set(v, (count.get(v) ?? 0) + 1);
+  let best: ClubId | null = null;
+  let top = 0;
+  for (const [club, n] of count) {
+    if (n > top) {
+      best = club;
+      top = n;
+    }
+  }
+  return top >= least ? best : null;
+}
+
+/**
+ * 라운드가 끝나면 실제로 친 클럽을 다음 라운드의 기본값으로 삼는다.
+ *
+ * 드라이버를 놓고 3번 우드로 티샷하는 사람에게 매 홀 드라이버를 깔아 주면,
+ * 클럽을 더할 수 있게 만든 보람이 없다. 두 번째 샷만 보는 이유는 세 번째
+ * 이후로 가면 웨지 쪽으로 쏠려서 파3 티샷 기본값이 이상해지기 때문이다.
+ */
+function rememberClubs(round: Round, prefs: Prefs): Prefs {
+  const long = round.holes.filter((h) => h.par > 3);
+  const tee = mode(long.map((h) => h.shots[0]?.club).filter(Boolean) as ClubId[], 3);
+  const second = mode(long.map((h) => h.shots[1]?.club).filter(Boolean) as ClubId[], 3);
+  return {
+    ...prefs,
+    teeClub: tee ?? prefs.teeClub,
+    ironClub: second ?? prefs.ironClub,
+  };
 }
 
 /* ── 홈 ──────────────────────────────────────────────────────────── */

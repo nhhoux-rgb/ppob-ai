@@ -89,6 +89,28 @@ try {
     "  → 샷 줄에 +2 벌타 배지가 붙는다"
   );
 
+  // 목록에 없는 클럽을 더해 본다
+  await page.locator(".shot-block").first().locator(".chip.club").click();
+  await page.getByRole("button", { name: "+ 클럽 추가" }).click();
+  await page.getByPlaceholder(/2번 아이언/).fill("7번 우드");
+  check(
+    (await page.locator(".club-form .cf-row input").nth(1).inputValue()) === "7W",
+    "클럽 이름을 넣으면 줄임말이 따라 채워진다"
+  );
+  await page.getByRole("button", { name: "클럽 추가", exact: true }).click();
+  check(
+    (await page.locator(".shot-block").first().locator(".chip.club").textContent()) === "7W",
+    "  → 더하자마자 그 샷의 클럽이 된다"
+  );
+
+  await page.locator(".shot-block").first().locator(".chip.club").click();
+  check(
+    (await page.getByRole("button", { name: "7번 우드", exact: true }).count()) === 1,
+    "  → '내 클럽' 에 남아 다시 고를 수 있다"
+  );
+  await page.keyboard.press("Escape");
+  await page.locator(".shot-block").first().locator(".chip.club").click();
+
   await page.getByRole("button", { name: "다음 홀 →" }).click();
   await page.getByText("2번홀").waitFor();
   check((await holeScore.textContent()) === "5", "2번홀 파5 기본값이 5타로 잡힌다");

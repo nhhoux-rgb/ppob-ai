@@ -4,11 +4,15 @@ export type Par = 3 | 4 | 5;
 
 /* ── 클럽 ────────────────────────────────────────────────────────── */
 
-export type ClubId =
-  | "Dr" | "3W" | "5W"
-  | "U3" | "U4" | "U5"
-  | "4i" | "5i" | "6i" | "7i" | "8i" | "9i"
-  | "PW" | "AW" | "SW" | "LW";
+/**
+ * 붙박이 클럽은 아래 목록의 id 를 그대로 쓰고, 이용자가 더한 클럽은
+ * `c:2번 아이언` 처럼 이름을 그대로 안고 있는 id 를 쓴다.
+ *
+ * 이름을 id 에 넣어 둔 덕에, 나중에 그 클럽을 지워도 예전 라운드의 기록이
+ * 정체불명의 코드로 변하지 않는다. 목록을 뒤져 못 찾으면 id 에서 이름을
+ * 그대로 꺼내 보여주면 된다.
+ */
+export type ClubId = string;
 
 export type ClubGroup = "우드" | "유틸" | "아이언" | "웨지";
 
@@ -33,12 +37,50 @@ export const CLUBS: { id: ClubId; label: string; short: string; group: ClubGroup
 
 export const CLUB_GROUPS: ClubGroup[] = ["우드", "유틸", "아이언", "웨지"];
 
-export function clubLabel(id: ClubId): string {
-  return CLUBS.find((c) => c.id === id)?.label ?? id;
+/* ── 이용자가 더한 클럽 ──────────────────────────────────────────── */
+
+/** 2번 아이언, 7번 우드, 58도… 사람마다 백에 든 것이 다르다. */
+export type CustomClub = { label: string; short: string };
+
+const CUSTOM = "c:";
+
+export function customClubId(label: string): ClubId {
+  return CUSTOM + label.trim();
 }
 
-export function clubShort(id: ClubId): string {
-  return CLUBS.find((c) => c.id === id)?.short ?? id;
+export function isCustomClub(id: ClubId): boolean {
+  return id.startsWith(CUSTOM);
+}
+
+/**
+ * 칩에 넣을 줄임말을 이름에서 뽑아 본다. 이용자가 직접 고쳐 넣을 수 있으니
+ * 여기서는 흔한 표기만 알아들으면 된다.
+ */
+export function autoShort(label: string): string {
+  const name = label.trim();
+  const wood = name.match(/^(\d+)\s*번?\s*(우드|W)/i);
+  if (wood) return `${wood[1]}W`;
+  const util = name.match(/^(\d+)\s*번?\s*(유틸|하이브리드|[UH])/i);
+  if (util) return `${util[1]}U`;
+  const iron = name.match(/^(\d+)\s*번?\s*(아이언|I)/i);
+  if (iron) return `${iron[1]}i`;
+  const wedge = name.match(/^(\d+)\s*도/);
+  if (wedge) return wedge[1];
+  return name.replace(/\s+/g, "").slice(0, 4);
+}
+
+export function clubLabel(id: ClubId): string {
+  const found = CLUBS.find((c) => c.id === id);
+  if (found) return found.label;
+  // 지워진 클럽이어도 id 안에 이름이 남아 있어 그대로 읽힌다
+  return isCustomClub(id) ? id.slice(CUSTOM.length) : id;
+}
+
+export function clubShort(id: ClubId, customs: CustomClub[] = []): string {
+  const found = CLUBS.find((c) => c.id === id);
+  if (found) return found.short;
+  const label = clubLabel(id);
+  return customs.find((c) => c.label === label)?.short || autoShort(label);
 }
 
 /* ── 샷 결과 ─────────────────────────────────────────────────────── */

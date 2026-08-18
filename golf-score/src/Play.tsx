@@ -10,13 +10,16 @@ import {
   CLUBS,
   CLUB_GROUPS,
   type ClubId,
+  type CustomClub,
   type Hole,
   type Par,
   type Round,
   type Shot,
   type ShotResult,
+  autoShort,
   clubLabel,
   clubShort,
+  customClubId,
   regulationShots,
   resultLabel,
 } from "./types";
@@ -41,15 +44,21 @@ const RESULT_GROUPS: { title: string; ids: ShotResult[]; cols?: 2 }[] = [
 export default function Play({
   round,
   cursor,
+  customClubs,
   onRound,
   onCursor,
+  onAddClub,
+  onRemoveClub,
   onFinish,
   onExit,
 }: {
   round: Round;
   cursor: number;
+  customClubs: CustomClub[];
   onRound: (r: Round) => void;
   onCursor: (n: number) => void;
+  onAddClub: (club: CustomClub) => void;
+  onRemoveClub: (label: string) => void;
   onFinish: () => void;
   onExit: () => void;
 }) {
@@ -183,7 +192,7 @@ export default function Play({
                   className={`chip club${open === `c${i}` ? " open" : ""}`}
                   onClick={() => toggle(`c${i}`)}
                 >
-                  {clubShort(shot.club)}
+                  {clubShort(shot.club, customClubs)}
                 </button>
                 <button
                   className={`chip res ${shot.result === "good" ? "ok" : "miss"}${
@@ -202,28 +211,16 @@ export default function Play({
               </div>
 
               {open === `c${i}` && (
-                <div className="picker">
-                  {CLUB_GROUPS.map((g) => (
-                    <div className="pick-group" key={g}>
-                      <div className="pick-title">{g}</div>
-                      <div className="pick-grid">
-                        {CLUBS.filter((c) => c.group === g).map((c) => (
-                          <button
-                            key={c.id}
-                            className={`pick${c.id === shot.club ? " on" : ""}`}
-                            onClick={() => {
-                              haptic("tap");
-                              setShot(i, { club: c.id as ClubId });
-                              setOpen(null);
-                            }}
-                          >
-                            {clubLabel(c.id)}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <ClubPicker
+                  selected={shot.club}
+                  customClubs={customClubs}
+                  onPick={(club) => {
+                    setShot(i, { club });
+                    setOpen(null);
+                  }}
+                  onAdd={onAddClub}
+                  onRemove={onRemoveClub}
+                />
               )}
 
               {open === `r${i}` && (
@@ -309,6 +306,162 @@ export default function Play({
               </button>
             </div>
           </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── 클럽 고르기 ─────────────────────────────────────────────────── */
+
+/**
+ * 백에 든 것은 사람마다 다르다. 2번 아이언을 넣고 다니는 사람도, 3번 우드
+ * 대신 7번 우드를 쓰는 사람도 있다. 그래서 목록에 없는 클럽은 여기서 바로
+ * 더할 수 있게 했다. 라운드 중에 필요해지는 물건이라 설정 화면으로 보내지
+ * 않고, 클럽을 고르는 그 자리에 둔다.
+ */
+function ClubPicker({
+  selected,
+  customClubs,
+  onPick,
+  onAdd,
+  onRemove,
+}: {
+  selected: ClubId;
+  customClubs: CustomClub[];
+  onPick: (club: ClubId) => void;
+  onAdd: (club: CustomClub) => void;
+  onRemove: (label: string) => void;
+}) {
+  const [adding, setAdding] = useState(false);
+  const [label, setLabel] = useState("");
+  const [short, setShort] = useState("");
+  // 줄임말을 손대기 전까지는 이름을 따라간다. 손댄 뒤에는 그대로 둔다.
+  const [touched, setTouched] = useState(false);
+
+  const clean = label.trim();
+  const already = customClubs.some((c) => c.label === clean);
+  const canAdd = clean.length > 0 && !already;
+
+  function add() {
+    if (!canAdd) return;
+    haptic("success");
+    const club = { label: clean, short: (touched ? short.trim() : "") || autoShort(clean) };
+    onAdd(club);
+    setLabel("");
+    setShort("");
+    setTouched(false);
+    setAdding(false);
+    // 방금 더한 클럽으로 이 샷을 바로 채운다. 더하자마자 또 골라야 하면
+    // 더한 보람이 없다.
+    onPick(customClubId(club.label));
+  }
+
+  return (
+    <div className="picker">
+      {CLUB_GROUPS.map((g) => (
+        <div className="pick-group" key={g}>
+          <div className="pick-title">{g}</div>
+          <div className="pick-grid">
+            {CLUBS.filter((c) => c.group === g).map((c) => (
+              <button
+                key={c.id}
+                className={`pick${c.id === selected ? " on" : ""}`}
+                onClick={() => {
+                  haptic("tap");
+                  onPick(c.id);
+                }}
+              >
+                {clubLabel(c.id)}
+              </button>
+            ))}
+          </div>
+        </div>
+      ))}
+
+      <div className="pick-group">
+        <div className="pick-title">내 클럽</div>
+        <div className="pick-grid">
+          {customClubs.map((c) => (
+            <button
+              key={c.label}
+              className={`pick${customClubId(c.label) === selected ? " on" : ""}`}
+              onClick={() => {
+                haptic("tap");
+                onPick(customClubId(c.label));
+              }}
+            >
+              {c.label}
+            </button>
+          ))}
+          <button
+            className={`pick add${adding ? " on" : ""}`}
+            onClick={() => {
+              haptic("tap");
+              setAdding(!adding);
+            }}
+          >
+            + 클럽 추가
+          </button>
+        </div>
+      </div>
+
+      {adding && (
+        <div className="club-form">
+          <label className="cf-row">
+            <span>이름</span>
+            <input
+              value={label}
+              onChange={(e) => {
+                setLabel(e.target.value);
+                if (!touched) setShort(autoShort(e.target.value));
+              }}
+              placeholder="예: 2번 아이언, 7번 우드, 58도"
+              autoComplete="off"
+              autoFocus
+            />
+          </label>
+          <label className="cf-row">
+            <span>줄임말</span>
+            <input
+              value={short}
+              onChange={(e) => {
+                setTouched(true);
+                setShort(e.target.value);
+              }}
+              placeholder={clean ? autoShort(clean) : "칩에 보일 글자"}
+              autoComplete="off"
+              maxLength={4}
+            />
+          </label>
+          <button className="btn" onClick={add} disabled={!canAdd}>
+            {already ? "이미 있는 클럽입니다" : "클럽 추가"}
+          </button>
+
+          {customClubs.length > 0 && (
+            <div className="cf-list">
+              <div className="pick-title">더해 둔 클럽</div>
+              {customClubs.map((c) => (
+                <div className="cf-item" key={c.label}>
+                  <span className="cf-name">{c.label}</span>
+                  <span className="cf-short">{c.short}</span>
+                  <button
+                    className="cf-del"
+                    onClick={() => {
+                      haptic("tap");
+                      onRemove(c.label);
+                    }}
+                    aria-label={`${c.label} 지우기`}
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+              <p className="cf-note">
+                지워도 예전 라운드에 남은 기록은 그대로 보입니다.
+              </p>
+            </div>
+          )}
         </div>
       )}
     </div>
