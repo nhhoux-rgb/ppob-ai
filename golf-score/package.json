@@ -8,6 +8,8 @@
     "build": "vite build && ait build",
     "build:web": "vite build",
     "smoke": "node test/smoke.mjs",
+    "logo": "node brand/logo.mjs",
+    "shots": "node brand/screenshots.mjs",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "node test/run.mjs",
@@ -21,6 +23,7 @@
   },
   "devDependencies": {
     "@apps-in-toss/devtools": "^3.0.3",
+    "@resvg/resvg-js": "^2.6.2",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.4",

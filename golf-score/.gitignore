@@ -3,3 +3,4 @@ dist
 .test-build
 .ait
 *.ait
+brand/.fonts
