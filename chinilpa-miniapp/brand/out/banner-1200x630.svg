@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <radialGradient id="vig" cx="50%" cy="0%" r="105%">
+      <stop offset="0%" stop-color="#E1DCCB"/>
+      <stop offset="100%" stop-color="#C9C3AF"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="630" fill="#D8D3C2"/>
+  <rect width="1200" height="630" fill="url(#vig)"/>
+
+  <!-- 서식 머리 -->
+  <text x="86" y="74" font-family="Noto Serif KR Black"
+        font-size="22" fill="#4A4F5A" letter-spacing="6.6">身元調書 第二號</text>
+  <g transform="translate(1048 50) rotate(-3)">
+    <rect x="0" y="0" width="86" height="52" fill="none" stroke="#8E2B1F" stroke-width="4" rx="3"/>
+    <text x="43" y="27" font-family="Noto Serif KR Black" font-size="34" text-anchor="middle"
+          dominant-baseline="central" fill="#8E2B1F">秘</text>
+  </g>
+  <rect x="86" y="98" width="1028" height="5" fill="#1C1F26"/>
+  <rect x="86" y="111" width="1028" height="2" fill="#B0A992"/>
+
+  <!-- 제목 -->
+  <text x="86" y="277" font-family="NanumMyeongjoExtraBold"
+        font-size="98" fill="#1C1F26">친일파 테스트</text>
+  <text x="86" y="369" font-family="NanumMyeongjoExtraBold"
+        font-size="50" fill="#8E2B1F">1940년, 당신의 선택</text>
+  <text x="86" y="463" font-family="NanumMyeongjoExtraBold"
+        font-size="28" fill="#4A4F5A">열여섯 번의 갈림길. 당신은 몇 단계에서 꺾일까?</text>
+
+  <!-- 인장 -->
+  <g transform="translate(983 343) rotate(-11)">
+    <circle r="117" fill="none" stroke="#8E2B1F" stroke-width="13"/>
+    <text x="0" y="0" font-family="Noto Serif KR Black" font-size="157"
+          text-anchor="middle" dominant-baseline="central" fill="#8E2B1F">秘</text>
+  </g>
+
+  <rect x="86" y="592" width="1028" height="2" fill="#B0A992"/>
+</svg>

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="600" viewBox="0 0 600 600"><defs><radialGradient id="g" cx="50%" cy="36%" r="76%">
+    <stop offset="0%" stop-color="#D8D3C2"/><stop offset="100%" stop-color="#C9C3AF"/>
+  </radialGradient></defs>
+  <rect width="600" height="600" fill="url(#g)"/>
+    <text x="300" y="284" font-family="NanumMyeongjoExtraBold" font-size="228"
+          text-anchor="middle" dominant-baseline="central" fill="#1C1F26"
+          letter-spacing="-8">1940</text>
+    <rect x="132" y="396" width="336" height="16" rx="8" fill="#8E2B1F"/>
+    <text x="300" y="446" font-family="NanumMyeongjoExtraBold" font-size="62"
+          text-anchor="middle" dominant-baseline="hanging" fill="#1C1F26"
+          letter-spacing="14">당신의 선택</text></svg>

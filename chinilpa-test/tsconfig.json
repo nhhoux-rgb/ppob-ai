@@ -10,6 +10,9 @@
     "module": "esnext",
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
+    // scripts/calibrate.mts 는 node --experimental-strip-types 로 직접 돌리기
+    // 때문에 import 경로에 .ts 확장자가 필요하다. noEmit 이므로 안전하다.
+    "allowImportingTsExtensions": true,
     "isolatedModules": true,
     "jsx": "react-jsx",
     "incremental": true,
@@ -30,18 +33,5 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": [
-    "node_modules",
-    "toss-miniapp",
-    "toss-broker-fee",
-    "toss-quiz",
-    "broker-fee",
-    "chinilpa-test",
-    "chinilpa-miniapp",
-    "desk-fengshui",
-    "news-summary",
-    "parallel-universe",
-    "postal-tracker",
-    "running-shoe"
-  ]
+  "exclude": ["node_modules"]
 }
