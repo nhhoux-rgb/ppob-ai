@@ -359,16 +359,139 @@ export const QUESTIONS: Question[] = [
     answer: 0,
     explain: "셰익스피어는 『햄릿』 등 수많은 희곡을 남긴 영국의 대문호예요.",
   },
+
+  // ── 분야별 추가 문항 ──────────────────
+  {
+    cat: "politics",
+    q: "대한민국에서 국군을 지휘·통솔하는 국군통수권자는?",
+    options: ["대통령", "국방부 장관", "합참의장", "국회의장"],
+    answer: 0,
+    explain: "헌법상 대통령이 국군통수권을 가져요.",
+  },
+  {
+    cat: "world",
+    q: "세계에서 인구가 가장 많은 대륙은?",
+    options: ["아시아", "아프리카", "유럽", "북아메리카"],
+    answer: 0,
+    explain: "아시아는 세계 인구의 절반 이상이 사는, 인구가 가장 많은 대륙이에요.",
+  },
+  {
+    cat: "science",
+    q: "건강한 사람의 정상 체온에 가장 가까운 온도는?",
+    options: ["약 36.5℃", "약 40℃", "약 34℃", "약 39℃"],
+    answer: 0,
+    explain: "사람의 정상 체온은 대략 36.5℃ 안팎이에요.",
+  },
+  {
+    cat: "science",
+    q: "태양에서 나오는 빛이 지구까지 오는 데 걸리는 시간에 가장 가까운 것은?",
+    options: ["약 8분", "약 8초", "약 8시간", "약 1분"],
+    answer: 0,
+    explain: "태양빛은 약 1억 5천만 km를 달려 약 8분 20초 만에 지구에 닿아요.",
+  },
+  {
+    cat: "it",
+    q: "구글이 개발한 스마트폰 운영체제(OS)는?",
+    options: ["안드로이드", "iOS", "윈도우", "리눅스"],
+    answer: 0,
+    explain: "안드로이드는 구글이 만든 모바일 OS예요. iOS는 애플의 OS.",
+  },
+  {
+    cat: "it",
+    q: "이메일 주소에서 아이디와 도메인 사이에 반드시 들어가는 기호는?",
+    options: ["@ (골뱅이)", "# (샵)", "& (앰퍼샌드)", "% (퍼센트)"],
+    answer: 0,
+    explain: "이메일 주소는 '아이디@도메인' 형식으로 @ 기호가 들어가요.",
+  },
+  {
+    cat: "koreanhistory",
+    q: "몽골 침입을 물리치려는 염원으로 만들어져 합천 해인사에 보관된 세계기록유산은?",
+    options: ["팔만대장경", "직지심체요절", "동의보감", "삼국사기"],
+    answer: 0,
+    explain: "팔만대장경(고려대장경)은 고려가 몽골 침입을 부처의 힘으로 막고자 새긴 목판이에요.",
+  },
+  {
+    cat: "koreanhistory",
+    q: "1919년 대한민국 임시정부가 처음 수립된 도시는?",
+    options: ["상하이", "서울", "도쿄", "베이징"],
+    answer: 0,
+    explain: "대한민국 임시정부는 1919년 중국 상하이에서 수립됐어요.",
+  },
+  {
+    cat: "worldhistory",
+    q: "고대 문명 중 하나인 이집트 문명이 발달한 강은?",
+    options: ["나일강", "아마존강", "갠지스강", "황허"],
+    answer: 0,
+    explain: "이집트 문명은 나일강 유역에서 꽃피운 4대 문명 중 하나예요.",
+  },
+  {
+    cat: "worldhistory",
+    q: "인류 최초로 달에 착륙한 것은 몇 년도의 일일까요?",
+    options: ["1969년", "1957년", "1975년", "1961년"],
+    answer: 0,
+    explain: "1969년 아폴로 11호가 인류 최초로 달에 착륙했어요.",
+  },
+  {
+    cat: "society",
+    q: "대한민국의 화폐 단위는?",
+    options: ["원", "엔", "위안", "달러"],
+    answer: 0,
+    explain: "대한민국의 화폐 단위는 '원'이에요.",
+  },
+  {
+    cat: "society",
+    q: "대한민국의 나라꽃(국화)은?",
+    options: ["무궁화", "장미", "벚꽃", "진달래"],
+    answer: 0,
+    explain: "대한민국의 국화는 무궁화예요.",
+  },
+  {
+    cat: "society",
+    q: "지구에서 가장 넓은 바다(대양)는?",
+    options: ["태평양", "대서양", "인도양", "북극해"],
+    answer: 0,
+    explain: "태평양은 지구에서 가장 넓고 깊은 대양이에요.",
+  },
+  {
+    cat: "sports",
+    q: "올림픽을 상징하는 오륜기의 고리는 모두 몇 개일까요?",
+    options: ["5개", "4개", "6개", "3개"],
+    answer: 0,
+    explain: "오륜기의 다섯 고리는 5대륙을 상징해요.",
+  },
+  {
+    cat: "sports",
+    q: "농구에서 한 팀이 코트에 동시에 나서는 선수 인원은?",
+    options: ["5명", "6명", "7명", "9명"],
+    answer: 0,
+    explain: "농구는 한 팀 5명이 코트에서 뛰어요.",
+  },
+  {
+    cat: "arts",
+    q: "바티칸 시스티나 성당의 천장화 '천지창조'를 그린 예술가는?",
+    options: ["미켈란젤로", "레오나르도 다 빈치", "피카소", "렘브란트"],
+    answer: 0,
+    explain: "'천지창조'는 미켈란젤로가 시스티나 성당 천장에 그린 대작이에요.",
+  },
+  {
+    cat: "arts",
+    q: "교향곡 '운명', '합창'을 작곡한 독일의 음악가는?",
+    options: ["베토벤", "모차르트", "바흐", "쇼팽"],
+    answer: 0,
+    explain: "베토벤은 '운명' 교향곡 등으로 유명한 고전·낭만기 작곡가예요.",
+  },
 ];
 
 // 분야로 문제를 고른다. random 이면 전체.
+// 선택한 분야 문제만 사용하며(다른 분야 섞지 않음), 보유량이 count 보다
+// 적으면 그만큼만 낸다.
 export function pickByCategory(
   cat: CategoryKey,
   count: number,
 ): Question[] {
-  const pool = cat === "random" ? QUESTIONS : QUESTIONS.filter((q) => q.cat === cat);
-  const base = pool.length >= count ? pool : QUESTIONS; // 부족하면 전체로 보충
-  return shuffle(base).slice(0, count);
+  const pool =
+    cat === "random" ? QUESTIONS : QUESTIONS.filter((q) => q.cat === cat);
+  return shuffle(pool).slice(0, count);
 }
 
 function shuffle<T>(arr: T[]): T[] {
