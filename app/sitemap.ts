@@ -11,6 +11,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: "/guide/rigged", priority: 0.8 },
     { path: "/how-to-use", priority: 0.6 },
     { path: "/faq", priority: 0.6 },
+    // 웹 공개판 정적 번들(public/dream). 상대경로 에셋 때문에 index.html까지 적는다.
+    { path: "/dream/index.html", priority: 0.6 },
     { path: "/privacy", priority: 0.3 },
   ];
 
