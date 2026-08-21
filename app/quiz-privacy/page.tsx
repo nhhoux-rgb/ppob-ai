@@ -52,8 +52,9 @@ export default function QuizPrivacyPage() {
               2. 보관 및 처리 위탁
             </h2>
             <p>
-              수집한 정보는 클라우드 백엔드 서비스인 <strong>Supabase</strong>에
-              저장·처리됩니다. 서비스는 랭킹 운영 목적을 위해서만 이를 이용합니다.
+              수집한 정보는 클라우드 백엔드 서비스인 <strong>Supabase</strong>의{" "}
+              <strong>국내(서울, ap-northeast-2) 리전</strong>에 저장·처리되며,
+              서비스는 랭킹 운영 목적을 위해서만 이를 이용합니다.
             </p>
             <p className="mt-2">
               퀴즈 문제 생성 과정에서 <strong>OpenAI</strong>의 API를 이용하나, 이는
