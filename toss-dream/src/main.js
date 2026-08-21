@@ -32,11 +32,11 @@ const INTERSTITIAL_AD_GROUP_ID = "ait.v2.live.bcfe6ce2ee984e39";
 // 전면 광고가 연달아 뜨지 않도록 두는 최소 간격.
 const INTERSTITIAL_MIN_GAP_MS = 90_000;
 
-// 앱인토스 콘솔 > 프로모션에서 발급된 프로모션 코드.
-// 검수 통과 뒤 테스트할 때는 앞에 TEST_가 붙은 코드를 넣는다. TEST_ 코드는
-// 실제 포인트가 차감되지 않고, 이 호출을 한 번 성공시켜야 프로모션을 시작할 수 있다.
+// 앱인토스 콘솔 > 프로모션에서 발급된 운영 코드. 실제 포인트가 지급된다.
+// 테스트할 때만 앞에 TEST_를 붙인 코드로 바꿔 빌드한다(포인트 미차감).
+// 콘솔에서 "프로모션 시작하기"를 누른 뒤부터 이 코드가 동작한다.
 // 비어 있으면 프로모션 카드 자체를 그리지 않는다.
-const PROMOTION_CODE = "TEST_01M0H2K59HKCJK08T0QGC8BPDD";
+const PROMOTION_CODE = "01M0H2K59HKCJK08T0QGC8BPDD";
 const PROMOTION_AMOUNT = 10;
 const PROMOTION_STORAGE_KEY = "ai-dream-promo-v1";
 
