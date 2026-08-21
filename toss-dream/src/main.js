@@ -29,8 +29,8 @@ const AD_GROUP_ID = "";
 // 검수 통과 뒤 테스트할 때는 앞에 TEST_가 붙은 코드를 넣는다. TEST_ 코드는
 // 실제 포인트가 차감되지 않고, 이 호출을 한 번 성공시켜야 프로모션을 시작할 수 있다.
 // 비어 있으면 프로모션 카드 자체를 그리지 않는다.
-const PROMOTION_CODE = "";
-const PROMOTION_AMOUNT = 100;
+const PROMOTION_CODE = "TEST_01M0GX14E8A2SKPCEYYR3JNZZ7";
+const PROMOTION_AMOUNT = 10;
 const PROMOTION_STORAGE_KEY = "ai-dream-promo-v1";
 
 const app = document.querySelector("#app");
@@ -114,7 +114,12 @@ async function checkPromotion() {
   if (!PROMOTION_CODE || hasClaimedPromotion()) return;
   const toss = await bridge();
   // 토스 앱 밖(웹 공개판)이거나 구버전 앱이면 카드를 아예 그리지 않는다.
-  if (!toss?.Promotion?.grantReward?.isSupported?.()) return;
+  // 웹에서는 isSupported()가 토스 전역값을 못 찾아 예외를 던지므로 함께 막는다.
+  try {
+    if (!toss?.Promotion?.grantReward?.isSupported?.()) return;
+  } catch {
+    return;
+  }
   state.promoReady = true;
   render();
 }
