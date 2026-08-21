@@ -37,11 +37,18 @@ npm run build   # vite build && ait build
 생성된 `.ait` 파일을 앱인토스 콘솔에 업로드한다. 콘솔의 앱 이름은
 `apps-in-toss.config.ts`의 `appName`(`ai-dream`)과 정확히 같아야 한다.
 
-## 보상형 광고
+## 광고
 
-`src/main.js`의 `AD_GROUP_ID` 상수가 비어 있으면 광고 없이 행운 미션을 바로 공개한다.
-앱인토스 콘솔에서 보상형 광고그룹을 발급받으면 그 값(`ait.v2.live.xxxx`)만 채우면
-`userEarnedReward` 이벤트가 온 뒤에만 미션이 열린다.
+광고그룹 상수 두 개를 `src/main.js` 위쪽에서 관리한다. 비어 있으면 그 광고는 쓰지 않는다.
+
+- `REWARDED_AD_GROUP_ID` — 행운 미션 잠금 해제. `userEarnedReward` 이벤트가 온 뒤에만
+  미션이 열린다. 광고를 띄울 수 없는 환경에서는 막지 않고 그냥 공개한다.
+- `INTERSTITIAL_AD_GROUP_ID` — 결과에서 "다른 꿈 해몽하기"로 돌아가는 화면전환.
+  해몽을 한 번이라도 받아본 뒤부터, `INTERSTITIAL_MIN_GAP_MS` 간격을 두고 띄운다.
+  광고가 실패하거나 응답이 없어도 8초 뒤 전환은 반드시 진행한다.
+
+두 광고 모두 `loadFullScreenAd`/`showFullScreenAd`를 쓰고 `adGroupId`로만 갈린다.
+`isSupported()`는 토스 앱 밖에서 예외를 던지므로 반드시 `supports()` 헬퍼로 감싼다.
 
 ## 프로모션 (토스 포인트 지급)
 

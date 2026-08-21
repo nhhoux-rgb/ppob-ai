@@ -24,9 +24,13 @@ const LOADING_STEPS = [
   "오늘의 운세를 정리하는 중이에요",
 ];
 
-// 앱인토스 콘솔에서 보상형 광고그룹을 발급받으면 이 값만 채우면 된다.
-// 비어 있으면 광고 없이 행운 미션을 바로 공개한다.
-const AD_GROUP_ID = "";
+// 앱인토스 콘솔에서 발급한 광고그룹. 비어 있으면 그 광고는 아예 쓰지 않는다.
+// 리워드: 행운 미션 잠금 해제용. 전면: 결과 → 다시 해몽하기 화면전환용.
+const REWARDED_AD_GROUP_ID = "ait.v2.live.7c07bcfa639c4322";
+const INTERSTITIAL_AD_GROUP_ID = "ait.v2.live.bcfe6ce2ee984e39";
+
+// 전면 광고가 연달아 뜨지 않도록 두는 최소 간격.
+const INTERSTITIAL_MIN_GAP_MS = 90_000;
 
 // 앱인토스 콘솔 > 프로모션에서 발급된 프로모션 코드.
 // 검수 통과 뒤 테스트할 때는 앞에 TEST_가 붙은 코드를 넣는다. TEST_ 코드는
@@ -44,7 +48,7 @@ const state = {
   loading: false,
   error: "",
   actionUnlocked: false,
-  adReady: false,
+  analyzeCount: 0,
   promoReady: false,
   promoStage: "idle",
   promoMessage: "",
@@ -112,24 +116,42 @@ function webShareLink() {
   }
 }
 
-async function preloadRewardedAd() {
-  if (!AD_GROUP_ID) return;
-  const toss = await bridge();
-  if (!toss) return;
+// 토스 앱 밖(웹 공개판)에서는 isSupported()가 토스 전역값을 찾지 못해 예외를
+// 던진다. 지원 여부 확인은 전부 이 헬퍼를 거쳐 "미지원"으로 떨어지게 한다.
+function supports(check) {
   try {
-    if (!toss.loadFullScreenAd.isSupported()) return;
-    state.adReady = false;
+    return typeof check === "function" && check() === true;
+  } catch {
+    return false;
+  }
+}
+
+// 광고그룹별 준비 상태. 미리 불러둬야 보여줄 수 있다.
+const adReady = { rewarded: false, interstitial: false };
+let lastInterstitialAt = 0;
+
+function adGroupOf(kind) {
+  return kind === "rewarded" ? REWARDED_AD_GROUP_ID : INTERSTITIAL_AD_GROUP_ID;
+}
+
+async function preloadAd(kind) {
+  const adGroupId = adGroupOf(kind);
+  if (!adGroupId) return;
+  const toss = await bridge();
+  if (!supports(toss?.loadFullScreenAd?.isSupported)) return;
+  try {
+    adReady[kind] = false;
     toss.loadFullScreenAd({
-      options: { adGroupId: AD_GROUP_ID },
+      options: { adGroupId },
       onEvent: (event) => {
-        if (event.type === "loaded") state.adReady = true;
+        if (event.type === "loaded") adReady[kind] = true;
       },
       onError: () => {
-        state.adReady = false;
+        adReady[kind] = false;
       },
     });
   } catch {
-    state.adReady = false;
+    adReady[kind] = false;
   }
 }
 
@@ -156,12 +178,7 @@ async function checkPromotion() {
   if (!PROMOTION_CODE || hasClaimedPromotion()) return;
   const toss = await bridge();
   // 토스 앱 밖(웹 공개판)이거나 구버전 앱이면 카드를 아예 그리지 않는다.
-  // 웹에서는 isSupported()가 토스 전역값을 못 찾아 예외를 던지므로 함께 막는다.
-  try {
-    if (!toss?.Promotion?.grantReward?.isSupported?.()) return;
-  } catch {
-    return;
-  }
+  if (!supports(toss?.Promotion?.grantReward?.isSupported)) return;
   state.promoReady = true;
   render();
 }
@@ -206,6 +223,52 @@ async function claimPromotion() {
   render();
 }
 
+// 결과에서 입력 화면으로 돌아가는 전환. 이미 해몽을 한 번 받아본 사람에게만,
+// 그것도 간격을 두고 전면 광고를 끼운다. 광고가 없거나 실패해도 전환은 항상 진행한다.
+function resetToInput() {
+  state.page = "input";
+  state.error = "";
+  state.promoStage = state.promoStage === "done" ? "done" : "idle";
+  state.promoDetail = "";
+  render();
+}
+
+async function goToInput() {
+  const toss = await bridge();
+  const canShow =
+    INTERSTITIAL_AD_GROUP_ID &&
+    state.analyzeCount >= 1 &&
+    adReady.interstitial &&
+    Date.now() - lastInterstitialAt > INTERSTITIAL_MIN_GAP_MS &&
+    supports(toss?.showFullScreenAd?.isSupported);
+  if (!canShow) {
+    resetToInput();
+    return;
+  }
+  let moved = false;
+  const proceed = () => {
+    if (moved) return;
+    moved = true;
+    adReady.interstitial = false;
+    resetToInput();
+    window.setTimeout(() => preloadAd("interstitial"), 500);
+  };
+  try {
+    lastInterstitialAt = Date.now();
+    toss.showFullScreenAd({
+      options: { adGroupId: INTERSTITIAL_AD_GROUP_ID },
+      onEvent: (event) => {
+        if (event.type === "dismissed" || event.type === "failedToShow") proceed();
+      },
+      onError: proceed,
+    });
+    // 광고가 끝내 뜨지 않아도 화면이 멈춰 있지 않도록 안전장치를 둔다.
+    window.setTimeout(proceed, 8000);
+  } catch {
+    proceed();
+  }
+}
+
 function unlockAction() {
   state.actionUnlocked = true;
   render();
@@ -215,42 +278,45 @@ async function showRewardedAd() {
   const toss = await bridge();
   // 광고를 띄울 수 없는 환경(웹 공개판, 광고그룹 미설정 등)에서는
   // 사용자를 막지 않고 미션을 그대로 공개한다.
-  if (!AD_GROUP_ID || !toss || !toss.showFullScreenAd.isSupported()) {
+  if (
+    !REWARDED_AD_GROUP_ID ||
+    !supports(toss?.showFullScreenAd?.isSupported)
+  ) {
     unlockAction();
     return;
   }
-  if (!state.adReady) {
+  if (!adReady.rewarded) {
     state.error = "광고를 아직 준비하지 못했어요. 잠시 후 다시 눌러주세요.";
     render();
-    preloadRewardedAd();
+    preloadAd("rewarded");
     return;
   }
   let rewarded = false;
   try {
     toss.showFullScreenAd({
-      options: { adGroupId: AD_GROUP_ID },
+      options: { adGroupId: REWARDED_AD_GROUP_ID },
       onEvent: (event) => {
         if (event.type === "userEarnedReward") rewarded = true;
         if (event.type === "dismissed") {
-          state.adReady = false;
+          adReady.rewarded = false;
           if (rewarded) unlockAction();
           else {
             state.error = "광고를 끝까지 보면 행운 미션이 열려요.";
             render();
           }
-          window.setTimeout(preloadRewardedAd, 500);
+          window.setTimeout(() => preloadAd("rewarded"), 500);
         }
       },
       onError: () => {
         state.error = "광고를 불러오지 못했어요. 다시 시도해주세요.";
         render();
-        preloadRewardedAd();
+        preloadAd("rewarded");
       },
     });
   } catch {
     state.error = "광고를 표시하지 못했어요.";
     render();
-    preloadRewardedAd();
+    preloadAd("rewarded");
   }
 }
 
@@ -299,6 +365,8 @@ async function analyzeDream() {
     }
     state.page = "result";
     state.actionUnlocked = false;
+    state.analyzeCount += 1;
+    preloadAd("interstitial");
   } catch (error) {
     state.error =
       error.name === "AbortError"
@@ -417,17 +485,13 @@ function renderResult() {
     <h2>오늘의 운세 한눈에</h2><div class="fortunes">${r.fortunes.map((f) => `<article><div><span>${esc(f.emoji)}</span><b>${esc(f.key)}</b></div><strong>${esc(f.level)}</strong>${scoreBar(f.score)}<p>${esc(f.note)}</p></article>`).join("")}</div>
     <h2>꿈속 주요 상징</h2><div class="symbols">${r.symbols.map((s) => `<article><span>${esc(s.emoji)}</span><div><b>${esc(s.name)}</b><p>${esc(s.meaning)}</p>${s.connection ? `<p class="link">→ ${esc(s.connection)}</p>` : ""}</div></article>`).join("")}</div>
     ${r.reflection ? `<article class="reflect-card"><small>스스로에게 던져볼 질문</small><b>${esc(r.reflection)}</b></article>` : ""}
-    <section class="good-card ${state.actionUnlocked ? "unlocked" : ""}"><div class="gift">${state.actionUnlocked ? esc(r.goodThingEmoji) : "🎁"}</div><div><small>오늘의 행운 미션</small><h2>${state.actionUnlocked ? esc(r.goodThing) : "행운 미션 확인하기"}</h2></div>${state.actionUnlocked ? `<p class="mission-why">${esc(r.goodThingWhy)}</p><ol>${r.actionSteps.map((step) => `<li>${esc(step)}</li>`).join("")}</ol>` : `<button id="reward" class="reward">무료로 확인하기${AD_GROUP_ID ? " <span>AD</span>" : ""}</button>`}</section>
+    <section class="good-card ${state.actionUnlocked ? "unlocked" : ""}"><div class="gift">${state.actionUnlocked ? esc(r.goodThingEmoji) : "🎁"}</div><div><small>오늘의 행운 미션</small><h2>${state.actionUnlocked ? esc(r.goodThing) : "행운 미션 확인하기"}</h2></div>${state.actionUnlocked ? `<p class="mission-why">${esc(r.goodThingWhy)}</p><ol>${r.actionSteps.map((step) => `<li>${esc(step)}</li>`).join("")}</ol>` : `<button id="reward" class="reward">무료로 확인하기${REWARDED_AD_GROUP_ID ? " <span>AD</span>" : ""}</button>`}</section>
     ${state.error ? `<p class="notice">${esc(state.error)}</p>` : ""}
     <button id="share" class="primary share-button">친구에게 결과 공유하기 <span>↗</span></button><button id="save" class="secondary">결과 저장하기</button><button id="again" class="secondary subtle">다른 꿈 해몽하기</button>
     <p class="fine">${esc(r.disclaimer)}</p>
   </section>`;
   app.querySelector("#back").onclick = app.querySelector("#again").onclick =
-    () => {
-      state.page = "input";
-      state.error = "";
-      render();
-    };
+    goToInput;
   app.querySelector("#save").onclick = saveResult;
   app.querySelector("#share").onclick = shareResult;
   app.querySelector("#reward")?.addEventListener("click", showRewardedAd);
@@ -440,6 +504,6 @@ function render() {
 }
 
 render();
-preloadRewardedAd();
+preloadAd("rewarded");
 detectReferral();
 checkPromotion();
