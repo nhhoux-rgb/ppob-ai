@@ -29,7 +29,7 @@ const AD_GROUP_ID = "";
 // 검수 통과 뒤 테스트할 때는 앞에 TEST_가 붙은 코드를 넣는다. TEST_ 코드는
 // 실제 포인트가 차감되지 않고, 이 호출을 한 번 성공시켜야 프로모션을 시작할 수 있다.
 // 비어 있으면 프로모션 카드 자체를 그리지 않는다.
-const PROMOTION_CODE = "TEST_01M0GX14E8A2SKPCEYYR3JNZZ7";
+const PROMOTION_CODE = "TEST_01M0H2K59HKCJK08T0QGC8BPDD";
 const PROMOTION_AMOUNT = 10;
 const PROMOTION_STORAGE_KEY = "ai-dream-promo-v1";
 
