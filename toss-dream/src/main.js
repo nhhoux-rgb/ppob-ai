@@ -1,9 +1,12 @@
 import "./style.css";
 import "./result-v2.css";
 import {
+  buildShareMessage,
   fallbackResult,
   MAX_DREAM_LENGTH,
   normalizeDream,
+  SHARE_PARAM,
+  SHARE_VALUE,
   STORAGE_KEY,
   validateDream,
 } from "./dream.js";
@@ -46,6 +49,7 @@ const state = {
   promoStage: "idle",
   promoMessage: "",
   promoDetail: "",
+  referred: false,
 };
 
 const esc = (value) =>
@@ -69,6 +73,43 @@ function bridge() {
     bridgePromise = import("@apps-in-toss/web-framework").catch(() => null);
   }
   return bridgePromise;
+}
+
+// ── 공유 유입 판별 ──────────────────────────────────────────────
+// 공유 링크에는 ?from=share를 붙여 보낸다. 토스 앱은 앱을 연 스킴 주소를
+// Environment.initialURL로 알려주고, 웹 공개판은 주소창에 그대로 남는다.
+// 둘 다 못 읽어도 일반 첫 화면으로 떨어질 뿐이라 손해가 없다.
+function hasShareMark(value) {
+  return typeof value === "string" && value.includes(`${SHARE_PARAM}=${SHARE_VALUE}`);
+}
+
+async function detectReferral() {
+  if (hasShareMark(location.search)) {
+    state.referred = true;
+    render();
+    return;
+  }
+  const toss = await bridge();
+  try {
+    if (hasShareMark(toss?.Environment?.initialURL)) {
+      state.referred = true;
+      render();
+    }
+  } catch {
+    /* 토스 앱 밖에서는 확인할 방법이 없다 */
+  }
+}
+
+// 웹에서 쓸 공유 주소. 기존 쿼리는 버리고 유입 표시만 남긴다.
+function webShareLink() {
+  try {
+    const url = new URL(location.href);
+    url.search = `?${SHARE_PARAM}=${SHARE_VALUE}`;
+    url.hash = "";
+    return url.toString();
+  } catch {
+    return location.href;
+  }
 }
 
 async function preloadRewardedAd() {
@@ -289,19 +330,16 @@ function saveResult() {
 
 async function shareResult() {
   const r = state.result;
-  const fortuneLine = r.fortunes
-    .map((item) => `${item.emoji}${item.key} ${item.level}`)
-    .join(" · ");
   const toss = await bridge();
   try {
-    let link = location.href;
+    let link = webShareLink();
     if (toss?.Share?.createLink) {
       link = await toss.Share.createLink({
-        path: "intoss://ai-dream",
+        path: `intoss://ai-dream?${SHARE_PARAM}=${SHARE_VALUE}`,
         ogImageUrl: SHARE_IMAGE_URL,
       });
     }
-    const message = `🌙 내 꿈은 ${r.categoryLabel}!\n${r.title}\n${fortuneLine}\n\n꿈결에서 내 꿈도 해몽해보기\n${link}`;
+    const message = buildShareMessage(r, link);
     if (toss?.Share?.sendMessage) await toss.Share.sendMessage({ message });
     else if (navigator.share)
       await navigator.share({
@@ -315,7 +353,7 @@ async function shareResult() {
       render();
     }
   } catch {
-    const message = `🌙 내 꿈은 ${r.categoryLabel}! ${r.title} — 꿈결 AI 꿈해몽 ${location.href}`;
+    const message = buildShareMessage(r, webShareLink());
     try {
       await navigator.clipboard.writeText(message);
       state.error = "공유 문구와 링크를 복사했어요.";
@@ -329,8 +367,9 @@ async function shareResult() {
 function renderInput() {
   app.innerHTML = `<section class="input-page">
     <div class="moon-mark"><span>☾</span></div>
-    <p class="eyebrow">AI DREAM NOTE</p><h1>어젯밤 꿈,<br>무슨 의미였을까요?</h1>
-    <p class="lead">장면과 그때 기분을 함께 적을수록<br>더 정확한 해석이 나와요.</p>
+    ${state.referred ? '<p class="referral">친구가 보낸 링크로 들어왔어요</p>' : '<p class="eyebrow">AI DREAM NOTE</p>'}
+    <h1>${state.referred ? "친구가 본 그 해몽,<br>내 꿈으로도 받아보세요" : "어젯밤 꿈,<br>무슨 의미였을까요?"}</h1>
+    <p class="lead">${state.referred ? "꿈 한 줄만 적으면 30초 만에<br>길몽인지 주의몽인지 알려드려요." : "장면과 그때 기분을 함께 적을수록<br>더 정확한 해석이 나와요."}</p>
     <div class="input-card"><label for="dream">꿈 내용</label><textarea id="dream" maxlength="${MAX_DREAM_LENGTH}" placeholder="예: 큰 뱀이 집 안으로 들어왔는데 이상하게 무섭지 않고 오히려 반가웠어요.">${esc(state.dream)}</textarea><div class="counter"><span>개인정보는 적지 마세요</span><b>${state.dream.length}/${MAX_DREAM_LENGTH}</b></div></div>
     ${state.error ? `<p class="notice">${esc(state.error)}</p>` : ""}
     <button id="analyze" class="primary" ${state.loading ? "disabled" : ""}>${state.loading ? `<i class="spinner"></i> ${LOADING_STEPS[0]}` : "꿈 해몽하기 <span>→</span>"}</button>
@@ -402,4 +441,5 @@ function render() {
 
 render();
 preloadRewardedAd();
+detectReferral();
 checkPromotion();

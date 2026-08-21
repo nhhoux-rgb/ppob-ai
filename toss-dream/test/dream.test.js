@@ -1,6 +1,13 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { fallbackResult, normalizeDream, validateDream } from "../src/dream.js";
+import {
+  buildShareMessage,
+  fallbackResult,
+  normalizeDream,
+  shareHook,
+  topFortune,
+  validateDream,
+} from "../src/dream.js";
 
 test("꿈 입력의 공백을 정리한다", () =>
   assert.equal(normalizeDream("  큰   뱀을 봤어요  "), "큰 뱀을 봤어요"));
@@ -45,4 +52,32 @@ test("오늘의 한 가지와 성찰 질문이 비어 있지 않다", () => {
   const result = fallbackResult("누군가에게 쫓기다가 깼어요");
   assert.ok(result.todayFocus);
   assert.ok(result.reflection.endsWith("?"), "성찰은 질문 형태여야 한다");
+});
+
+test("공유 문구는 분류마다 다른 후킹으로 시작한다", () => {
+  const hooks = ["lucky", "caution", "mind"].map(shareHook);
+  assert.equal(new Set(hooks).size, 3, "세 분류가 서로 다른 문구여야 한다");
+  for (const hook of hooks) assert.ok(hook.length > 5);
+});
+
+test("공유 문구에 제목·최고 운세·링크가 모두 들어간다", () => {
+  const result = fallbackResult("큰 뱀이 집으로 들어왔어요");
+  const link = "https://toss.im/abcd";
+  const message = buildShareMessage(result, link);
+  assert.ok(message.includes(result.title), "제목");
+  assert.ok(message.includes(link), "링크");
+  assert.ok(message.endsWith(link), "링크가 마지막 줄");
+  assert.ok(!message.includes("undefined"), "빈 값이 새지 않아야 한다");
+  const top = topFortune(result.fortunes);
+  assert.ok(message.includes(`${top.score}점`), "가장 높은 운세 점수");
+});
+
+test("가장 높은 점수의 운세를 고른다", () => {
+  const picked = topFortune([
+    { key: "대운", score: 40 },
+    { key: "금전", score: 91 },
+    { key: "연애", score: 55 },
+  ]);
+  assert.equal(picked.key, "금전");
+  assert.equal(topFortune([]), null);
 });

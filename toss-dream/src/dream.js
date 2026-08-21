@@ -139,3 +139,36 @@ export function fallbackResult(dream) {
     disclaimer: "꿈 해석은 재미와 자기 성찰을 위한 참고용이에요.",
   };
 }
+
+// ── 공유 문구 ────────────────────────────────────────────────────
+// 받는 사람이 "나도 해볼까" 하게 만드는 게 목적이라, 보낸 사람 자랑이
+// 아니라 궁금증 + 초대 문장으로 구성한다.
+export const SHARE_PARAM = "from";
+export const SHARE_VALUE = "share";
+
+export function shareHook(category) {
+  if (category === "lucky") return "🌙 어젯밤 꿈 해몽했더니 길몽이래";
+  if (category === "caution") return "🌙 어젯밤 꿈, 그냥 넘길 게 아니었네";
+  return "🌙 어젯밤 그 꿈이 왜 그랬는지 알겠다";
+}
+
+// 네 항목 중 점수가 가장 높은 운세. 점수가 없는 예전 결과도 견딘다.
+export function topFortune(fortunes) {
+  if (!Array.isArray(fortunes) || fortunes.length === 0) return null;
+  return fortunes.reduce((best, item) =>
+    (item?.score ?? -1) > (best?.score ?? -1) ? item : best,
+  );
+}
+
+export function buildShareMessage(result, link) {
+  const lines = [shareHook(result.category), "", `「${result.title}」`];
+  const top = topFortune(result.fortunes);
+  if (top) {
+    const level = typeof top.score === "number" ? `${top.score}점` : top.level;
+    lines.push(
+      `${top.emoji}${top.key} ${level}${result.mood ? ` · ${result.mood}` : ""}`,
+    );
+  }
+  lines.push("", "너도 어젯밤 꿈 한 줄만 적어봐. 30초면 나와 👇", link);
+  return lines.join("\n");
+}
