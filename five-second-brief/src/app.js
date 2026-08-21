@@ -1,25 +1,31 @@
 import { categories, getDailySet } from './questions.js';
 import { platform } from './platform.js';
 import { fetchAiSet, checkOfficialAnswer } from './quiz-api.js';
+import { submitScore, fetchLeaderboard } from './rank-api.js';
 
 const app=document.querySelector('#app');
-let state={screen:'home',user:null,category:null,setId:null,questions:[],index:0,correct:0,totalMs:0,startedAt:0,timer:null,countdown:3,locked:false,endReason:null,fallback:false};
+let state={screen:'home',user:null,category:null,setId:null,questions:[],index:0,correct:0,totalMs:0,startedAt:0,timer:null,countdown:3,locked:false,endReason:null,fallback:false,submitted:false,myRank:null,rankCategory:'economy',rankTop:[],rankMe:null,rankTotal:0,rankLoading:false};
 const limitFor=i=>i<5?5000:i<10?4500:i<15?4000:i<19?3500:3000;
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmtSec=ms=>`${(ms/1000).toFixed(2)}초`;
+const catName=id=>categories.find(c=>c.id===id)?.name??'';
 
 function shell(content,back=false){
   app.innerHTML=`<section class="phone"><header><button class="icon-btn ${back?'':'hidden'}" id="back" aria-label="뒤로">‹</button><div class="brand"><span class="spark">✦</span> 5초 브리핑</div><span class="pill">AI 퀴즈</span></header>${content}</section>`;
   document.querySelector('#back')?.addEventListener('click',()=>{clearInterval(state.timer);state.screen='home';render();});
 }
-function render(){({home,loading,countdown,quiz,result}[state.screen]??home)();}
+function render(){({home,loading,countdown,quiz,result,ranking}[state.screen]??home)();}
 
 function home(){
   shell(`<div class="hero"><div class="eyebrow">오늘 새로 만든 AI 상식 퀴즈</div><h1>5초로 시작해<br><em>3초까지 버텨보세요</em></h1><p>매일 새로운 20문제 · 오답이면 즉시 종료</p></div>
     <div class="daily-badge"><span>✦</span><div><b>오늘의 문제 준비 완료</b><small>공식 출처를 확인한 AI 퀴즈예요</small></div></div>
     <div class="section-title"><h2>분야를 선택하세요</h2><small>20문제 연속 도전</small></div>
     <div class="category-grid">${categories.map(c=>`<button class="category" data-id="${c.id}" style="--tint:${c.color}"><span class="cat-icon">${c.icon}</span><b>${c.name}</b><small>${c.desc}</small></button>`).join('')}</div>
-    <button class="primary" id="login">${state.user?`${state.user.nickname}님, 바로 도전하세요`:'토스로 3초 만에 시작하기'}</button>
+    <button class="primary" id="login">${state.user?`${esc(state.user.nickname)}님, 바로 도전하세요`:'토스로 3초 만에 시작하기'}</button>
+    <button class="text-btn" id="rank">🏆 랭킹 보기</button>
     <div class="safe-note">100문제 풀에서 난이도별 4개씩 골라 출제해요.</div>`);
   document.querySelector('#login').onclick=async e=>{if(!state.user){e.currentTarget.textContent='로그인 중…';state.user=await platform.login();render();}};
+  document.querySelector('#rank').onclick=()=>openRanking(state.rankCategory);
   document.querySelectorAll('.category').forEach(el=>el.onclick=()=>startCategory(el.dataset.id));
 }
 
@@ -28,7 +34,7 @@ async function startCategory(category){
   state.category=category;state.screen='loading';render();
   try{const live=await fetchAiSet(category);state.setId=live.setId;state.questions=live.questions;state.fallback=false;}
   catch(error){console.warn('AI daily set fallback',error);state.setId=null;state.questions=getDailySet(category);state.fallback=true;}
-  state.index=0;state.correct=0;state.totalMs=0;state.endReason=null;state.countdown=3;state.screen='countdown';render();
+  state.index=0;state.correct=0;state.totalMs=0;state.endReason=null;state.countdown=3;state.submitted=false;state.myRank=null;state.screen='countdown';render();
 }
 
 function loading(){
@@ -54,10 +60,38 @@ async function answer(choice){
   if(ok)state.correct++;document.querySelectorAll('[data-choice]').forEach(b=>{const n=Number(b.dataset.choice);if(n===correctIndex)b.classList.add('right');else if(n===choice)b.classList.add('wrong');});
   setTimeout(()=>{if(!ok){state.endReason=choice===-1?'시간 초과':'오답';finish();}else{state.index++;if(state.index>=20){state.endReason='20문제 완주';finish();}else render();}},620);
 }
-function finish(){state.screen='result';render();}
+async function finish(){
+  state.screen='result';render();
+  if(state.user&&!state.submitted){
+    state.submitted=true;
+    const r=await submitScore({hash:state.user.userId,nickname:state.user.nickname,category:state.category,streak:state.correct,elapsedMs:Math.round(state.totalMs)});
+    if(r&&typeof r.rank==='number'){state.myRank=r;if(state.screen==='result')render();}
+  }
+}
 function result(){
-  shell(`<div class="result-head"><span>${state.endReason}</span><h1>${state.correct}문제 연속 정답</h1><p>총 풀이 시간 ${(state.totalMs/1000).toFixed(2)}초</p></div><div class="daily-badge"><span>✓</span><div><b>오늘의 AI 퀴즈 완료</b><small>검증된 문제 풀에서 출제했어요</small></div></div><button class="primary" id="share">내 기록 공유하기</button><button class="secondary" id="again">다시 도전하기</button><p class="policy-note">오늘 생성된 AI 문제 · 출처 검증 완료</p>`,true);
+  const rankBadge=state.myRank?`<div class="daily-badge"><span>🏆</span><div><b>${catName(state.category)} ${state.myRank.rank}위</b><small>전체 ${state.myRank.total.toLocaleString()}명 중 · ${state.myRank.improved?'최고 기록 갱신!':'이번 기록 반영됨'}</small></div></div>`:'';
+  shell(`<div class="result-head"><span>${state.endReason}</span><h1>${state.correct}문제 연속 정답</h1><p>총 풀이 시간 ${(state.totalMs/1000).toFixed(2)}초</p></div>${rankBadge}<button class="primary" id="rank-view">🏆 랭킹 보기</button><button class="secondary" id="share">내 기록 공유하기</button><button class="text-btn" id="again">다시 도전하기</button><p class="policy-note">오늘 생성된 AI 문제 · 출처 검증 완료</p>`,true);
+  document.querySelector('#rank-view').onclick=()=>openRanking(state.category);
   document.querySelector('#share').onclick=async()=>{await platform.share(`오늘의 AI 퀴즈에서 ${state.correct}문제 연속 정답!`);document.querySelector('#share').textContent='공유 준비 완료 ✓';};
   document.querySelector('#again').onclick=()=>{state.screen='home';render();};
+}
+
+async function openRanking(category){
+  state.rankCategory=category||state.rankCategory||'economy';
+  state.screen='ranking';state.rankLoading=true;render();
+  const res=await fetchLeaderboard({category:state.rankCategory,hash:state.user?.userId});
+  state.rankLoading=false;state.rankTop=res?.top??[];state.rankMe=res?.me??null;state.rankTotal=res?.total??0;
+  if(state.screen==='ranking')render();
+}
+function ranking(){
+  const tabs=categories.map(c=>`<button class="rank-tab ${c.id===state.rankCategory?'on':''}" data-cat="${c.id}">${c.name}</button>`).join('');
+  const meLine=state.rankMe?`<div class="daily-badge"><span>🏆</span><div><b>내 순위 ${state.rankMe.rank}위</b><small>연속 ${state.rankMe.streak} · ${fmtSec(state.rankMe.elapsedMs)}</small></div></div>`:'';
+  let list;
+  if(state.rankLoading)list=`<div class="ad-wait" style="min-height:180px"><div class="loading-dots"><i></i><i></i><i></i></div></div>`;
+  else if(!state.rankTop.length)list=`<div class="safe-note">아직 기록이 없어요. 첫 주인공이 되어보세요!</div>`;
+  else list=`<div class="ranking">${state.rankTop.map(r=>`<div class="rank-row ${r.me?'me':''}"><strong>${r.rank<=3?['🥇','🥈','🥉'][r.rank-1]:r.rank}</strong><span>${r.me?'<small>나</small> ':''}${esc(r.nickname)}</span><b>연속 ${r.streak} · ${fmtSec(r.elapsedMs)}</b></div>`).join('')}</div>`;
+  shell(`<div class="section-title" style="margin-top:6px"><h2>🏆 랭킹</h2><small>연속정답·시간순</small></div><div class="rank-tabs">${tabs}</div>${meLine}${list}<button class="secondary" id="rank-refresh">새로고침</button>`,true);
+  document.querySelectorAll('.rank-tab').forEach(b=>b.onclick=()=>openRanking(b.dataset.cat));
+  document.querySelector('#rank-refresh').onclick=()=>openRanking(state.rankCategory);
 }
 render();
