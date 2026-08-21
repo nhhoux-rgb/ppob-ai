@@ -1,6 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { CATEGORIES, categoryLabel, type CategoryKey } from "./categories";
 import { pickByCategory, type Question } from "./questions";
+import {
+  getIdentity,
+  requestTossName,
+  setStoredName,
+  type Identity,
+} from "./identity";
+import { fetchTop, submitScore, type RankEntry } from "./leaderboard";
 
 // 기존 Vercel 백엔드에 문제 생성 API 추가 (CORS 허용됨)
 const API_URL = "https://ppob-ai-aics.vercel.app/api/quiz";
@@ -25,10 +32,10 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
-// 보기 순서를 섞어 정답 인덱스를 다시 계산.
-function shuffleOptions(
-  q: { options: string[]; answer: number },
-): { options: string[]; answer: number } {
+function shuffleOptions(q: { options: string[]; answer: number }): {
+  options: string[];
+  answer: number;
+} {
   const correct = q.options[q.answer];
   const options = shuffle(q.options);
   return { options, answer: options.indexOf(correct) };
@@ -47,14 +54,12 @@ function fromLocal(cat: CategoryKey): RoundQuestion[] {
   });
 }
 
-// AI 응답을 라운드 형식으로. 실패하면 예외를 던져 폴백으로 넘긴다.
 async function fromAI(cat: CategoryKey): Promise<RoundQuestion[]> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 15000);
   try {
     const res = await fetch(API_URL, {
       method: "POST",
-      // 단순 요청으로 보내 프리플라이트 회피 (토스 프록시 우회)
       headers: { "Content-Type": "text/plain;charset=UTF-8" },
       body: JSON.stringify({ category: cat, count: ROUND_SIZE }),
       signal: controller.signal,
@@ -89,7 +94,7 @@ async function fromAI(cat: CategoryKey): Promise<RoundQuestion[]> {
   }
 }
 
-type Phase = "start" | "loading" | "playing" | "result";
+type Phase = "start" | "loading" | "playing" | "result" | "rank";
 
 function verdict(score: number, total: number): { emoji: string; msg: string } {
   const ratio = score / total;
@@ -97,6 +102,11 @@ function verdict(score: number, total: number): { emoji: string; msg: string } {
   if (ratio >= 0.7) return { emoji: "🎉", msg: "훌륭해요! 상식이 탄탄하네요" };
   if (ratio >= 0.4) return { emoji: "👍", msg: "나쁘지 않아요, 조금만 더!" };
   return { emoji: "📚", msg: "다시 도전해 볼까요?" };
+}
+
+// 정답 시 획득 점수: 기본 100 + 남은 시간 비례 보너스(최대 +100)
+function gainFor(remainingMs: number): number {
+  return 100 + Math.round((Math.max(0, remainingMs) / TIME_LIMIT_MS) * 100);
 }
 
 export default function App() {
@@ -109,19 +119,57 @@ export default function App() {
   const [selected, setSelected] = useState<number | null>(null);
   const [timedOut, setTimedOut] = useState(false);
   const [remaining, setRemaining] = useState(TIME_LIMIT_MS);
-  const [score, setScore] = useState(0);
+  const [score, setScore] = useState(0); // 맞힌 개수
+  const [points, setPoints] = useState(0); // 이번 라운드 점수
 
-  const lockedRef = useRef(false); // 답 선택/시간초과로 잠김
+  const [identity, setIdentity] = useState<Identity | null>(null);
+  const [nick, setNick] = useState("");
+
+  // 랭킹 화면 상태
+  const [rankTop, setRankTop] = useState<RankEntry[]>([]);
+  const [rankMe, setRankMe] = useState<{ rank: number | null; points: number }>(
+    { rank: null, points: 0 },
+  );
+  const [rankSize, setRankSize] = useState(0);
+  const [rankLoading, setRankLoading] = useState(false);
+  const [rankDisabled, setRankDisabled] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+
+  const lockedRef = useRef(false);
   const advanceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const cur = round[idx];
   const locked = selected !== null || timedOut;
   const isLast = idx === round.length - 1;
 
+  // 최초 진입 시 신원 로드
+  useEffect(() => {
+    let alive = true;
+    getIdentity().then((id) => {
+      if (!alive) return;
+      setIdentity(id);
+      setNick(id.name);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  async function loadTossName() {
+    const n = await requestTossName();
+    if (n) {
+      setNick(n);
+      setStoredName(n);
+    }
+  }
+
   async function start(category: CategoryKey) {
     setCat(category);
     setScore(0);
+    setPoints(0);
     setIdx(0);
+    setSubmitted(false);
     setPhase("loading");
     try {
       const r = await fromAI(category);
@@ -142,7 +190,6 @@ export default function App() {
     setRemaining(TIME_LIMIT_MS);
   }
 
-  // 문제별 카운트다운 타이머
   useEffect(() => {
     if (phase !== "playing" || !cur) return;
     const startAt = Date.now();
@@ -163,7 +210,6 @@ export default function App() {
       }
     }, 50);
     return () => clearInterval(iv);
-    // idx 가 바뀔 때마다 새 타이머 시작
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [idx, phase, round]);
 
@@ -171,7 +217,10 @@ export default function App() {
     if (lockedRef.current) return;
     lockedRef.current = true;
     setSelected(i);
-    if (i === cur.answer) setScore((s) => s + 1);
+    if (i === cur.answer) {
+      setScore((s) => s + 1);
+      setPoints((p) => p + gainFor(remaining));
+    }
     scheduleAdvance();
   }
 
@@ -199,20 +248,60 @@ export default function App() {
     };
   }, []);
 
-  // ── 시작 화면: 분야 선택 ──────────────────
+  async function openRank() {
+    setPhase("rank");
+    setRankLoading(true);
+    setRankDisabled(false);
+    const res = await fetchTop(identity?.id);
+    setRankLoading(false);
+    if (!res) return;
+    if (res.disabled) {
+      setRankDisabled(true);
+      return;
+    }
+    setRankTop(res.top);
+    setRankMe(res.me);
+    setRankSize(res.size);
+  }
+
+  async function submitAndShowRank() {
+    if (!identity || submitting) return;
+    const name = nick.trim() || "게스트";
+    setStoredName(name);
+    setSubmitting(true);
+    setPhase("rank");
+    setRankLoading(true);
+    setRankDisabled(false);
+    const res = await submitScore(identity.id, name, points);
+    setSubmitting(false);
+    setRankLoading(false);
+    setSubmitted(true);
+    if (!res) return;
+    if (res.disabled) {
+      setRankDisabled(true);
+      return;
+    }
+    setRankTop(res.top);
+    setRankMe({ rank: res.rank, points: res.total });
+    setRankSize(res.size);
+  }
+
+  // ── 시작 화면 ─────────────────────────────
   if (phase === "start") {
     return (
       <div className="wrap">
         <header className="header">
           <span className="brand">5초 상식퀴즈</span>
-          <span className="badge">⚡ 스피드</span>
+          <button className="rankbtn" onClick={openRank}>
+            🏆 랭킹
+          </button>
         </header>
         <div className="intro">
           <div className="intro-emoji">🧠⏱️</div>
           <h1 className="title">문제당 5초, 순발력 상식 게임</h1>
           <p className="sub">
-            분야를 고르면 AI가 매번 새로운 {ROUND_SIZE}문제를 출제해요. 5초 안에
-            정답을 골라보세요!
+            분야를 고르면 AI가 매번 새로운 {ROUND_SIZE}문제를 출제해요. 빨리
+            맞힐수록 높은 점수! 랭킹에 도전해 보세요.
           </p>
         </div>
         <div className="catlabel">분야 선택</div>
@@ -224,6 +313,11 @@ export default function App() {
             </button>
           ))}
         </div>
+        {identity && (
+          <p className="whoami">
+            랭킹 이름: <b>{identity.name}</b>
+          </p>
+        )}
       </div>
     );
   }
@@ -241,6 +335,69 @@ export default function App() {
     );
   }
 
+  // ── 랭킹 화면 ─────────────────────────────
+  if (phase === "rank") {
+    return (
+      <div className="wrap">
+        <header className="header">
+          <span className="brand">🏆 랭킹</span>
+          <span className="badge">누적 점수</span>
+        </header>
+
+        {rankLoading ? (
+          <div className="rankloading">
+            <div className="spinner" />
+            <div className="loadsub">
+              {submitting ? "점수 등록 중..." : "랭킹 불러오는 중..."}
+            </div>
+          </div>
+        ) : rankDisabled ? (
+          <div className="empty">
+            아직 랭킹 서버가 준비되지 않았어요.
+            <br />
+            (백엔드에 Redis 설정이 필요해요)
+          </div>
+        ) : (
+          <>
+            {submitted && (
+              <div className="myrank-card">
+                <div className="muted">내 순위</div>
+                <div className="myrank-main">
+                  {rankMe.rank ? `${rankMe.rank}위` : "-"}
+                  <span className="myrank-pts">
+                    {rankMe.points.toLocaleString()}점
+                  </span>
+                </div>
+                <div className="muted-sm">전체 {rankSize.toLocaleString()}명 중</div>
+              </div>
+            )}
+            {rankTop.length === 0 ? (
+              <div className="empty">
+                아직 랭킹이 비어 있어요. 첫 주인공이 되어보세요!
+              </div>
+            ) : (
+              <ol className="ranklist">
+                {rankTop.map((r) => (
+                  <li key={r.rank} className={`rankrow ${r.me ? "me" : ""}`}>
+                    <span className={`rk rk-${r.rank <= 3 ? r.rank : "n"}`}>
+                      {r.rank <= 3 ? ["🥇", "🥈", "🥉"][r.rank - 1] : r.rank}
+                    </span>
+                    <span className="rname">{r.name}</span>
+                    <span className="rpts">{r.points.toLocaleString()}점</span>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </>
+        )}
+
+        <button className="primary" onClick={() => setPhase("start")}>
+          분야 골라 플레이
+        </button>
+      </div>
+    );
+  }
+
   // ── 결과 화면 ─────────────────────────────
   if (phase === "result") {
     const v = verdict(score, round.length);
@@ -252,22 +409,37 @@ export default function App() {
         </header>
         <div className="result">
           <div className="result-emoji">{v.emoji}</div>
+          <div className="result-points">{points.toLocaleString()}점</div>
           <div className="result-score">
-            <b>{score}</b>
-            <span> / {round.length}</span>
+            정답 <b>{score}</b> / {round.length}
           </div>
           <div className="result-msg">{v.msg}</div>
-          <div className="result-bar">
-            <div
-              className="result-bar-fill"
-              style={{ width: `${(score / round.length) * 100}%` }}
-            />
-          </div>
-          <div className="result-tag">
-            {categoryLabel(cat)} · {aiUsed ? "AI 출제" : "기본 문제"}
-          </div>
         </div>
-        <button className="primary" onClick={() => start(cat)}>
+
+        <div className="nickbox">
+          <label className="nicklabel">랭킹에 표시할 이름</label>
+          <input
+            className="nickinput"
+            value={nick}
+            maxLength={16}
+            onChange={(e) => setNick(e.target.value)}
+            placeholder="닉네임"
+          />
+          {identity?.source === "toss" && (
+            <button className="tossname" onClick={loadTossName}>
+              토스 이름으로 등록하기
+            </button>
+          )}
+        </div>
+
+        <button
+          className="primary"
+          disabled={submitting}
+          onClick={submitAndShowRank}
+        >
+          🏆 랭킹 등록하기
+        </button>
+        <button className="ghost" onClick={() => start(cat)}>
           같은 분야 다시
         </button>
         <button className="ghost" onClick={() => setPhase("start")}>
@@ -287,11 +459,10 @@ export default function App() {
       <header className="header">
         <span className="brand">5초 상식퀴즈</span>
         <span className="badge">
-          {idx + 1} / {round.length}
+          {idx + 1} / {round.length} · {points.toLocaleString()}점
         </span>
       </header>
 
-      {/* 5초 타이머 */}
       <div className="timer">
         <div className="timer-track">
           <div
@@ -338,7 +509,7 @@ export default function App() {
         >
           <div className="explain-head">
             {selected === cur.answer
-              ? "정답이에요! ✨"
+              ? `정답이에요! +${gainFor(remaining)}점 ✨`
               : timedOut
                 ? "시간 초과! ⏱️"
                 : "아쉬워요 😅"}
