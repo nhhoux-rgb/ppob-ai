@@ -1,0 +1,20 @@
+{
+  "name": "five-second-brief",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build && ait build",
+    "preview": "vite preview",
+    "deploy": "ait deploy"
+  },
+  "devDependencies": {
+    "typescript": "~6.0.2",
+    "vite": "^8.2.0",
+    "@apps-in-toss/devtools": "^3.0.3"
+  },
+  "dependencies": {
+    "@apps-in-toss/web-framework": "latest"
+  }
+}
