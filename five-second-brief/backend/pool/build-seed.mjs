@@ -230,14 +230,44 @@ function esc(s) {
   return String(s).replace(/'/g, "''");
 }
 
+// 프롬프트 기반 결정적 PRNG → 정답 위치를 보기 4곳에 골고루 분산(재생성해도 동일).
+function hashSeed(str) {
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+function mulberry32(a) {
+  return function () {
+    a |= 0;
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+// 보기 순서를 섞고 정답의 새 인덱스를 돌려준다.
+function shuffleChoices(prompt, choices, ans) {
+  const rnd = mulberry32(hashSeed(prompt));
+  const idx = choices.map((_, i) => i);
+  for (let i = idx.length - 1; i > 0; i--) {
+    const j = Math.floor(rnd() * (i + 1));
+    [idx[i], idx[j]] = [idx[j], idx[i]];
+  }
+  return [idx.map((i) => choices[i]), idx.indexOf(ans)];
+}
+
 function buildCategorySql(category) {
   const src = SRC[category];
   const rows = [];
   for (let d = 1; d <= 5; d++) {
     for (const [prompt, choices, ans, expl] of DATA[category][d]) {
-      const choicesJson = JSON.stringify(choices);
+      const [shChoices, shAns] = shuffleChoices(prompt, choices, ans);
+      const choicesJson = JSON.stringify(shChoices);
       rows.push(
-        `  ('${esc(prompt)}', '${esc(choicesJson)}'::jsonb, ${ans}, '${esc(expl)}', ${d}, '${esc(src[0])}', '${src[1]}')`,
+        `  ('${esc(prompt)}', '${esc(choicesJson)}'::jsonb, ${shAns}, '${esc(expl)}', ${d}, '${esc(src[0])}', '${src[1]}')`,
       );
     }
   }
