@@ -43,6 +43,20 @@ npm run build   # vite build && ait build
 앱인토스 콘솔에서 보상형 광고그룹을 발급받으면 그 값(`ait.v2.live.xxxx`)만 채우면
 `userEarnedReward` 이벤트가 온 뒤에만 미션이 열린다.
 
+## 프로모션 (토스 포인트 지급)
+
+`src/main.js`의 `PROMOTION_CODE`가 비어 있으면 프로모션 카드를 그리지 않는다.
+콘솔에서 발급된 코드를 넣으면 결과 화면 맨 위에 "첫 해몽 완료 축하" 카드가 뜨고,
+버튼을 누르면 `Promotion.grantReward({ promotionCode, amount })`를 호출한다.
+
+- 검수 통과 뒤 테스트는 `TEST_` 접두사가 붙은 코드로 한다. 실제 포인트가
+  차감되지 않으며, 이 호출을 최소 1번 성공시켜야 프로모션을 시작할 수 있다.
+- 지급은 1인 1회. 기기의 `localStorage`(`ai-dream-promo-v1`)로 중복 요청을 막고,
+  콘솔의 "1인 하루 최대 지급 금액"이 서버 쪽 최종 방어선이다.
+- 토스 앱 밖(웹 공개판)이나 `grantReward.isSupported()`가 false인 구버전 앱에서는
+  카드를 아예 그리지 않는다. 최소 토스 버전은 Android/iOS 모두 5.232.0.
+- 지급 조건·시점·제한과 "사전 고지 없이 중단될 수 있어요" 고지는 카드 안에 함께 띄운다.
+
 ## 저장과 개인정보
 
 저장 버튼은 최근 결과 10개를 사용자 기기의 `localStorage`에만 보관한다. 서버는 OpenAI

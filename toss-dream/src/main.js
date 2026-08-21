@@ -25,6 +25,14 @@ const LOADING_STEPS = [
 // 비어 있으면 광고 없이 행운 미션을 바로 공개한다.
 const AD_GROUP_ID = "";
 
+// 앱인토스 콘솔 > 프로모션에서 발급된 프로모션 코드.
+// 검수 통과 뒤 테스트할 때는 앞에 TEST_가 붙은 코드를 넣는다. TEST_ 코드는
+// 실제 포인트가 차감되지 않고, 이 호출을 한 번 성공시켜야 프로모션을 시작할 수 있다.
+// 비어 있으면 프로모션 카드 자체를 그리지 않는다.
+const PROMOTION_CODE = "";
+const PROMOTION_AMOUNT = 100;
+const PROMOTION_STORAGE_KEY = "ai-dream-promo-v1";
+
 const app = document.querySelector("#app");
 const state = {
   page: "input",
@@ -34,6 +42,9 @@ const state = {
   error: "",
   actionUnlocked: false,
   adReady: false,
+  promoReady: false,
+  promoStage: "idle",
+  promoMessage: "",
 };
 
 const esc = (value) =>
@@ -78,6 +89,65 @@ async function preloadRewardedAd() {
   } catch {
     state.adReady = false;
   }
+}
+
+// ── 프로모션(토스 포인트 지급) ──────────────────────────────────
+// 1인 1회. 기기에 기록을 남겨 중복 요청을 막고, 콘솔의 "1인 하루 최대
+// 지급 금액"이 서버 쪽 최종 방어선 역할을 한다.
+function hasClaimedPromotion() {
+  try {
+    return localStorage.getItem(PROMOTION_STORAGE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function markPromotionClaimed() {
+  try {
+    localStorage.setItem(PROMOTION_STORAGE_KEY, "1");
+  } catch {
+    /* 저장이 막힌 기기에서도 지급 자체는 막지 않는다 */
+  }
+}
+
+async function checkPromotion() {
+  if (!PROMOTION_CODE || hasClaimedPromotion()) return;
+  const toss = await bridge();
+  // 토스 앱 밖(웹 공개판)이거나 구버전 앱이면 카드를 아예 그리지 않는다.
+  if (!toss?.Promotion?.grantReward?.isSupported?.()) return;
+  state.promoReady = true;
+  render();
+}
+
+async function claimPromotion() {
+  if (state.promoStage === "loading" || state.promoStage === "done") return;
+  if (hasClaimedPromotion()) {
+    state.promoStage = "done";
+    state.promoMessage = "이미 받으신 포인트예요.";
+    render();
+    return;
+  }
+  state.promoStage = "loading";
+  state.promoMessage = "";
+  render();
+  try {
+    const toss = await bridge();
+    await toss.Promotion.grantReward({
+      promotionCode: PROMOTION_CODE,
+      amount: PROMOTION_AMOUNT,
+    });
+    markPromotionClaimed();
+    state.promoStage = "done";
+    state.promoMessage = `${PROMOTION_AMOUNT}포인트를 지급했어요. 토스 혜택 탭 > 토스 포인트에서 확인할 수 있어요.`;
+  } catch (error) {
+    state.promoStage = "error";
+    state.promoMessage =
+      error?.code === "ALREADY_GRANTED"
+        ? "이미 받으신 포인트예요."
+        : "포인트를 지급하지 못했어요. 잠시 후 다시 시도해주세요.";
+    if (error?.code === "ALREADY_GRANTED") markPromotionClaimed();
+  }
+  render();
 }
 
 function unlockAction() {
@@ -260,6 +330,22 @@ function renderInput() {
   app.querySelector("#analyze").onclick = analyzeDream;
 }
 
+// 프로모션 카드. 토스 앱 안에서 코드가 설정됐을 때만 그린다.
+// 지급 조건·시점·제한과 중단 고지를 카드 안에 함께 노출한다(심사 필수 안내).
+const PROMOTION_TERMS = `첫 해몽을 완료하면 1인 1회, 즉시 지급돼요. 부정 참여로 확인되면 지급되지 않아요. 이 프로모션은 예산 소진 시 또는 사전 고지 없이 중단될 수 있어요.`;
+
+function promotionCard() {
+  if (!state.promoReady) return "";
+  if (state.promoStage === "done") {
+    return `<article class="promo-card done"><div class="promo-head"><span>🎉</span><div><small>첫 해몽 완료</small><b>${esc(state.promoMessage)}</b></div></div></article>`;
+  }
+  const busy = state.promoStage === "loading";
+  return `<article class="promo-card"><div class="promo-head"><span>🎁</span><div><small>첫 해몽 완료 축하</small><b>토스 포인트 ${PROMOTION_AMOUNT}원 받기</b></div></div>
+    <button id="promo" class="promo-button" ${busy ? "disabled" : ""}>${busy ? '<i class="spinner"></i> 지급하는 중이에요' : "포인트 받기"}</button>
+    ${state.promoStage === "error" ? `<p class="promo-error">${esc(state.promoMessage)}</p>` : ""}
+    <p class="promo-terms">${esc(PROMOTION_TERMS)}</p></article>`;
+}
+
 // 운세 점수를 0~100 막대 너비로. 값이 없으면 막대를 숨긴다.
 function scoreBar(score) {
   if (typeof score !== "number" || !Number.isFinite(score)) return "";
@@ -271,6 +357,7 @@ function renderResult() {
   const r = state.result;
   app.innerHTML = `<section class="result-page">
     <button id="back" class="back">‹ 다시 해몽하기</button><div class="result-head ${esc(r.category)}"><span class="category-badge">${r.category === "lucky" ? "🍀" : r.category === "caution" ? "🔔" : "☁️"} ${esc(r.categoryLabel)}</span><p>${esc(r.categoryLine)}</p><h1>${esc(r.title)}</h1></div>
+    ${promotionCard()}
     <article class="summary-card"><p>${esc(r.summary)}</p><div class="mood"><span>꿈이 남긴 기분</span><b>${esc(r.mood)}</b></div></article>
     ${r.todayFocus ? `<article class="focus-card"><span>☀️</span><div><small>오늘 하루, 이것만</small><b>${esc(r.todayFocus)}</b></div></article>` : ""}
     <h2>오늘의 운세 한눈에</h2><div class="fortunes">${r.fortunes.map((f) => `<article><div><span>${esc(f.emoji)}</span><b>${esc(f.key)}</b></div><strong>${esc(f.level)}</strong>${scoreBar(f.score)}<p>${esc(f.note)}</p></article>`).join("")}</div>
@@ -290,6 +377,7 @@ function renderResult() {
   app.querySelector("#save").onclick = saveResult;
   app.querySelector("#share").onclick = shareResult;
   app.querySelector("#reward")?.addEventListener("click", showRewardedAd);
+  app.querySelector("#promo")?.addEventListener("click", claimPromotion);
 }
 
 function render() {
@@ -299,3 +387,4 @@ function render() {
 
 render();
 preloadRewardedAd();
+checkPromotion();
