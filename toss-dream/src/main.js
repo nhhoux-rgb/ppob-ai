@@ -45,6 +45,7 @@ const state = {
   promoReady: false,
   promoStage: "idle",
   promoMessage: "",
+  promoDetail: "",
 };
 
 const esc = (value) =>
@@ -134,6 +135,7 @@ async function claimPromotion() {
   }
   state.promoStage = "loading";
   state.promoMessage = "";
+  state.promoDetail = "";
   render();
   try {
     const toss = await bridge();
@@ -145,12 +147,20 @@ async function claimPromotion() {
     state.promoStage = "done";
     state.promoMessage = `${PROMOTION_AMOUNT}포인트를 지급했어요. 토스 혜택 탭 > 토스 포인트에서 확인할 수 있어요.`;
   } catch (error) {
-    state.promoStage = "error";
-    state.promoMessage =
-      error?.code === "ALREADY_GRANTED"
-        ? "이미 받으신 포인트예요."
-        : "포인트를 지급하지 못했어요. 잠시 후 다시 시도해주세요.";
-    if (error?.code === "ALREADY_GRANTED") markPromotionClaimed();
+    // SDK는 실패 코드를 error.code에, 서버 메시지를 error.message에 담아 던진다.
+    // 원인을 알 수 없으면 손쓸 방법이 없으므로 코드와 메시지를 화면에 그대로 남긴다.
+    const code = typeof error?.code === "string" ? error.code : "UNKNOWN_ERROR";
+    const detail = typeof error?.message === "string" ? error.message : "";
+    console.error("promotion-grant-failed", code, detail);
+    if (/ALREADY|DUPLICAT/i.test(code)) {
+      markPromotionClaimed();
+      state.promoStage = "done";
+      state.promoMessage = "이미 받으신 포인트예요.";
+    } else {
+      state.promoStage = "error";
+      state.promoMessage = "포인트를 지급하지 못했어요. 잠시 후 다시 시도해주세요.";
+      state.promoDetail = detail ? `${code} · ${detail}` : code;
+    }
   }
   render();
 }
@@ -347,7 +357,7 @@ function promotionCard() {
   const busy = state.promoStage === "loading";
   return `<article class="promo-card"><div class="promo-head"><span>🎁</span><div><small>첫 해몽 완료 축하</small><b>토스 포인트 ${PROMOTION_AMOUNT}원 받기</b></div></div>
     <button id="promo" class="promo-button" ${busy ? "disabled" : ""}>${busy ? '<i class="spinner"></i> 지급하는 중이에요' : "포인트 받기"}</button>
-    ${state.promoStage === "error" ? `<p class="promo-error">${esc(state.promoMessage)}</p>` : ""}
+    ${state.promoStage === "error" ? `<p class="promo-error">${esc(state.promoMessage)}${state.promoDetail ? `<em>${esc(state.promoDetail)}</em>` : ""}</p>` : ""}
     <p class="promo-terms">${esc(PROMOTION_TERMS)}</p></article>`;
 }
 
