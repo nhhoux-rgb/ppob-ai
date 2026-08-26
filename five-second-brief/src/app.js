@@ -21,7 +21,7 @@ const catName = id => categories.find(c => c.id === id)?.name ?? '';
 const ticketLabel = () => state.tickets == null ? '' : `🎟️ ${state.tickets}`;
 
 function shell(content, back = false) {
-  app.innerHTML = `<section class="phone"><header><button class="icon-btn ${back ? '' : 'hidden'}" id="back" aria-label="뒤로">‹</button><div class="brand"><span class="spark">✦</span> 5초 브리핑</div><span class="pill">${ticketLabel() || 'AI 퀴즈'}</span></header>${content}</section>`;
+  app.innerHTML = `<section class="phone"><header><button class="icon-btn ${back ? '' : 'hidden'}" id="back" aria-label="뒤로">‹</button><div class="brand"><span class="spark">✦</span> 5초 상식퀴즈</div><span class="pill">${ticketLabel() || 'AI 퀴즈'}</span></header>${content}</section>`;
   document.querySelector('#back')?.addEventListener('click', () => { clearInterval(state.timer); state.screen = 'home'; render(); });
 }
 function render() { ({ home, store, loading, countdown, quiz, result, ranking }[state.screen] ?? home)(); }
