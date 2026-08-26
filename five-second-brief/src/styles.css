@@ -3,3 +3,28 @@
 .rank-tab{flex:1;border:1px solid #e2e7ee;background:#fff;border-radius:12px;padding:11px 0;font-size:13px;font-weight:750;color:#5e6d82}
 .rank-tab.on{background:#3182f6;border-color:#3182f6;color:#fff}
 .rank-tab:active{transform:scale(.97)}
+/* 모드 토글 */
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0 20px}
+.mode-btn{border:1.5px solid #e2e7ee;background:#fff;border-radius:16px;padding:14px 10px;text-align:center}
+.mode-btn b{display:block;font-size:15px;color:#26354b}
+.mode-btn small{display:block;margin-top:3px;color:#8994a4;font-size:12px}
+.mode-btn.on{border-color:#3182f6;background:#eef5ff}
+.mode-btn.on b{color:#1767c7}
+.mode-btn:active{transform:scale(.98)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.row2 .secondary{margin-top:0}
+/* 도전권 상점 */
+.store-note{background:#eef5ff;color:#1767c7;border-radius:14px;padding:12px 14px;font-size:13px;font-weight:700;margin-bottom:14px;text-align:center}
+.ticket-hero{text-align:center;padding:20px 0 10px}
+.ticket-big{font-size:44px;font-weight:900;color:#3182f6;letter-spacing:-1px}
+.ticket-hero small{color:#8994a4;font-size:13px}
+.store-list{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+.store-item{display:flex;align-items:center;gap:14px;border:1px solid #e7ebf1;background:#fff;border-radius:16px;padding:16px;text-align:left}
+.store-item:active{transform:scale(.99)}
+.store-item:disabled{opacity:.5}
+.store-item.buy{border-color:#3182f6;background:#f5f9ff}
+.si-ic{width:44px;height:44px;flex-shrink:0;display:grid;place-items:center;border-radius:13px;background:#eef2f7;font-size:22px}
+.si-txt{flex:1}
+.si-txt b{display:block;font-size:15px;color:#26354b}
+.si-txt small{display:block;margin-top:2px;color:#8994a4;font-size:12px}
+.si-plus{flex-shrink:0;font-size:14px;font-weight:800;color:#3182f6}

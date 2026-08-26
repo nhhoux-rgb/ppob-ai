@@ -1,8 +1,15 @@
-// 앱인토스 플랫폼 연동. 토스 안에서는 실제 로그인/공유 API를 쓰고,
-// 토스 밖(웹/미지원)에서는 localStorage 게스트로 자연스럽게 폴백한다.
-import { User, getConsentedUserData, share as tossShare } from '@apps-in-toss/web-framework';
+// 앱인토스 플랫폼 연동. 토스 안에서는 실제 로그인/공유/광고/결제 API를 쓰고,
+// 토스 밖(웹/미지원)에서는 자연스럽게 폴백한다.
+import {
+  User,
+  getConsentedUserData,
+  share as tossShare,
+  loadFullScreenAd,
+  showFullScreenAd,
+  IAP,
+} from '@apps-in-toss/web-framework';
+import { TOSS } from './config.js';
 
-const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 const withTimeout = (p, ms) =>
   Promise.race([
     p,
@@ -25,6 +32,13 @@ function writeLS(k, v) {
     localStorage.setItem(k, v);
   } catch {
     /* ignore */
+  }
+}
+function supported(fn) {
+  try {
+    return typeof fn?.isSupported === 'function' ? fn.isSupported() : false;
+  } catch {
+    return false;
   }
 }
 
@@ -55,7 +69,6 @@ async function tossHash() {
   return null;
 }
 
-// 이름 동의 데이터. 약관 미등록/거부 시 null. 성공하면 캐시.
 async function tossName() {
   const cached = readLS(LS_TOSS_NICK);
   if (cached) return cached;
@@ -79,7 +92,14 @@ async function tossName() {
 export const platform = {
   user: null,
 
-  // 로그인: 토스 익명 고유키(+동의 시 이름). 실패 시 게스트.
+  // 광고/결제 사용 가능 여부(설정값 + 네이티브 지원)
+  adAvailable() {
+    return Boolean(TOSS.adGroupId) && supported(loadFullScreenAd) && supported(showFullScreenAd);
+  },
+  purchaseAvailable() {
+    return Boolean(TOSS.purchaseSku) && supported(IAP.createOneTimePurchaseOrder);
+  },
+
   async login() {
     const hash = await tossHash();
     if (hash) {
@@ -91,10 +111,77 @@ export const platform = {
     return this.user;
   },
 
-  // 보상형 광고는 이번 버전 범위 밖 → mock 유지
+  // 보상형 전면광고: 시청 완료(userEarnedReward)면 { rewarded:true }.
   async showRewardedAd() {
-    await delay(1200);
-    return { rewarded: true, unitType: 'attempt', unitAmount: 1 };
+    const adGroupId = TOSS.adGroupId;
+    if (!this.adAvailable()) return { rewarded: false, reason: 'unavailable' };
+    return new Promise((resolve) => {
+      let done = false;
+      let earned = false;
+      const finish = (r) => {
+        if (done) return;
+        done = true;
+        resolve(r);
+      };
+      try {
+        loadFullScreenAd({
+          options: { adGroupId },
+          onEvent: (e) => {
+            if (e?.type === 'loaded') {
+              showFullScreenAd({
+                options: { adGroupId },
+                onEvent: (ev) => {
+                  if (ev?.type === 'userEarnedReward') earned = true;
+                  if (ev?.type === 'dismissed' || ev?.type === 'failedToShow') {
+                    finish({ rewarded: earned });
+                  }
+                },
+                onError: () => finish({ rewarded: false, reason: 'show_error' }),
+              });
+            }
+          },
+          onError: () => finish({ rewarded: false, reason: 'load_error' }),
+        });
+      } catch {
+        finish({ rewarded: false, reason: 'exception' });
+      }
+      // 안전장치: 60초 내 종료 없으면 실패 처리
+      setTimeout(() => finish({ rewarded: earned }), 60000);
+    });
+  },
+
+  // 유료 도전권 구매. onGrant(orderId)=>Promise<boolean> 로 서버 지급을 수행.
+  async purchase(onGrant) {
+    const sku = TOSS.purchaseSku;
+    if (!this.purchaseAvailable()) return { ok: false, reason: 'unavailable' };
+    return new Promise((resolve) => {
+      let done = false;
+      const finish = (r) => {
+        if (done) return;
+        done = true;
+        resolve(r);
+      };
+      try {
+        IAP.createOneTimePurchaseOrder({
+          options: {
+            sku,
+            processProductGrant: async ({ orderId }) => {
+              try {
+                return await onGrant(orderId);
+              } catch {
+                return false;
+              }
+            },
+          },
+          onEvent: (e) => {
+            if (e?.type === 'success') finish({ ok: true });
+          },
+          onError: () => finish({ ok: false, reason: 'error' }),
+        });
+      } catch {
+        finish({ ok: false, reason: 'exception' });
+      }
+    });
   },
 
   async share(message) {
