@@ -194,7 +194,7 @@ export const platform = {
       /* 폴백 */
     }
     try {
-      if (navigator.share) return await navigator.share({ title: '5초 브리핑', text: message });
+      if (navigator.share) return await navigator.share({ title: '5초 상식퀴즈', text: message });
       await navigator.clipboard?.writeText(message);
     } catch {
       /* ignore */

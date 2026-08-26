@@ -1,8 +1,8 @@
 export const categories = [
-  { id:'economy', icon:'₩', name:'경제', desc:'돈의 흐름을 읽어요', color:'#eaf2ff' },
-  { id:'current', icon:'●', name:'시사', desc:'오늘의 이슈를 짚어요', color:'#fff1dc' },
-  { id:'world', icon:'◎', name:'국제', desc:'세계의 흐름을 봐요', color:'#e9f9f0' },
-  { id:'history', icon:'◆', name:'역사', desc:'과거에서 답을 찾아요', color:'#f4edff' }
+  { id:'economy', icon:'📊', name:'경제', desc:'돈의 흐름을 읽어요', color:'#eaf2ff' },
+  { id:'current', icon:'📰', name:'시사', desc:'오늘의 이슈를 짚어요', color:'#fff1dc' },
+  { id:'world', icon:'🌐', name:'국제', desc:'세계의 흐름을 봐요', color:'#e9f9f0' },
+  { id:'history', icon:'🏛️', name:'역사', desc:'과거에서 답을 찾아요', color:'#f4edff' }
 ];
 
 // 로컬 예비 문제은행(AI 풀 미수신/오프라인 시 폴백). 분야별 20문제.
