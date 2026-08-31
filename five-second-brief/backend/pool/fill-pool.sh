@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# approach 2: ai-pool-maintain 을 반복 호출해 분야별 문제풀을 100/난이도20 까지 채운다.
+# approach 2: ai-pool-maintain 을 반복 호출해 분야별 문제풀을 200/난이도40 까지 채운다.
 #
 # 사전 조건 (Supabase 대시보드 > Edge Functions > Secrets):
 #   OPENAI_API_KEY        : OpenAI 키 (ai-pool-maintain 이 웹검색+생성에 사용)
@@ -11,7 +11,7 @@ set -euo pipefail
 
 BASE="https://euifgvsbvqjkzxljmxnl.supabase.co/functions/v1/ai-pool-maintain"
 SECRET="${POOL_MAINTAIN_SECRET:?POOL_MAINTAIN_SECRET 환경변수를 설정하세요}"
-ROUNDS="${ROUNDS:-8}"   # 분야당 최대 호출 횟수
+ROUNDS="${ROUNDS:-8}"   # 분야당 최대 호출 횟수 (이제 자동보충 크론이 있으니 수동 대량 채우기용)
 
 for cat in economy current world history; do
   echo "== $cat =="
