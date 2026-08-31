@@ -13,7 +13,7 @@
   - 분야 목표: 200문제/분야 (난이도별 40). 만료: 시사(current) 30일 · 나머지 365일.
   - OpenAI 웹검색으로 공식 원문(도메인 화이트리스트) 기반 문제만 채택.
 - 준비물: Supabase Secrets 에 `OPENAI_API_KEY`, `POOL_MAINTAIN_SECRET`.
-- 스케줄 등록: `autofill-cron.sql` 을 SQL Editor에서 **한 번** 실행 → 15분마다 `category=auto`로 순환 호출.
+- 스케줄 등록: `autofill-cron.sql` 을 SQL Editor에서 **한 번** 실행 → 30분마다 `category=auto`로 순환 호출.
 - 잡 확인:  `select * from cron.job where jobname='ai-pool-refill';`
 - 잡 해제:  `select cron.unschedule('ai-pool-refill');`
 

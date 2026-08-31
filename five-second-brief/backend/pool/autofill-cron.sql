@@ -18,11 +18,11 @@ create extension if not exists pg_net;
 select cron.unschedule('ai-pool-refill')
 where exists (select 1 from cron.job where jobname = 'ai-pool-refill');
 
--- 3) 15분마다 ai-pool-maintain 호출 (category=auto → 경제·시사·국제·역사 순환)
+-- 3) 30분마다 ai-pool-maintain 호출 (category=auto → 경제·시사·국제·역사 순환)
 --    호출당 부족한 난이도 1곳을 최대 20문제까지 보충합니다.
 select cron.schedule(
   'ai-pool-refill',
-  '*/15 * * * *',
+  '*/30 * * * *',
   $$
   select net.http_post(
     url     := 'https://euifgvsbvqjkzxljmxnl.supabase.co/functions/v1/ai-pool-maintain',
